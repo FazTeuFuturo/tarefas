@@ -17,7 +17,7 @@ export interface Quest {
     timer_updated_at?: string | null;
 }
 
-type QuestState = 'idle' | 'running' | 'done';
+type QuestState = 'idle' | 'running' | 'paused' | 'done';
 
 interface QuestCardProps {
     quest: Quest;
@@ -128,6 +128,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({
     const stateColor = {
         idle: 'var(--color-primary)',
         running: 'var(--color-secondary)',
+        paused: 'var(--color-warning)',
         done: 'var(--color-success)',
         pending: 'var(--color-warning)',
     }[questState] || (quest.status === 'pending' ? 'var(--color-warning)' : 'var(--color-primary)');

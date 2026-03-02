@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
 import { StatusBar } from '../../components/StatusBar';
@@ -73,7 +73,7 @@ export default function HeroDashboard() {
 
                 {view === 'tavern' && (
                     <div style={{ marginTop: 'var(--space-8)' }}>
-                        <Tavern profileId={profile.id} fcBalance={profile.fc_balance} onPurchase={updateFCBalance} />
+                        <Tavern fcBalance={profile.fc_balance} onPurchase={updateFCBalance} />
                     </div>
                 )}
 

@@ -3,19 +3,12 @@ import { Reward, useAppData } from '../hooks/useAppData';
 import { RewardCard } from './RewardCard';
 
 interface TavernProps {
-    profileId: string;
+    // profileId: string; (removido por não ser usado)
     fcBalance: number;
     onPurchase: (newBalance: number) => void;
 }
 
-const ICON_MAP: Record<string, string> = {
-    gamepad: '🎮',
-    pizza: '🍕',
-    moon: '🌙',
-    star: '⭐',
-    trophy: '🏆',
-    gift: '🎁',
-};
+// ICON_MAP removido pois já existe em RewardCard.tsx
 
 const playCoinsSound = () => {
     try {
@@ -37,7 +30,7 @@ const playCoinsSound = () => {
     } catch (err) { console.warn('Audio not supported', err); }
 };
 
-export const Tavern: React.FC<TavernProps> = ({ profileId, fcBalance, onPurchase }) => {
+export const Tavern: React.FC<TavernProps> = ({ fcBalance, onPurchase }) => {
     const { rewards, loading, buyReward } = useAppData();
     const [purchasing, setPurchasing] = useState<string | null>(null);
     const [celebration, setCelebration] = useState<string | null>(null);

@@ -71,23 +71,7 @@ export default function MasterDashboard() {
     };
 
     // States for Bonus Form
-    const [isGrantingBonus, setIsGrantingBonus] = useState(false);
-    const [bonusType, setBonusType] = useState<'xp' | 'fc'>('fc');
-    const [bonusAmount, setBonusAmount] = useState(50);
-    const [bonusReason, setBonusReason] = useState('');
-    const [bonusTarget, setBonusTarget] = useState<string>(''); // For later selection
-
-    const handleGrantBonus = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // Since we don't have a specific target selected yet in this simple version, 
-        // we log it or handle it for the whole family if needed. 
-        // For now, let's just show a success visual (mock implementation)
-        console.log(`Granted ${bonusAmount} ${bonusType} for ${bonusReason}`);
-        alert(`Bônus de ${bonusAmount} ${bonusType.toUpperCase()} concedido com sucesso!`);
-        setIsGrantingBonus(false);
-        setBonusAmount(50);
-        setBonusReason('');
-    };
+    // handleGrantBonus removido por não ser usado
 
     return (
         <div className="mobile-app-container">
@@ -349,7 +333,7 @@ export default function MasterDashboard() {
                         </div>
 
                         <div style={{ marginTop: 'var(--space-4)' }}>
-                            <Tavern profileId={profile.id} fcBalance={profile.fc_balance} onPurchase={updateFCBalance} />
+                            <Tavern fcBalance={profile.fc_balance} onPurchase={updateFCBalance} />
                         </div>
                     </div>
                 )}

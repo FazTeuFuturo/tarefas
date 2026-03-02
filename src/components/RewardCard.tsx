@@ -140,7 +140,7 @@ export const RewardCard: React.FC<RewardCardProps> = ({
             <DeleteConfirmationModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onConfirm={() => onDelete(reward.id)}
+                onConfirm={() => onDelete && onDelete(reward.id)}
                 title="Excluir Recompensa"
                 message={`Você tem certeza que deseja deletar "${reward.titulo}"? Esta ação não pode ser desfeita.`}
             />
