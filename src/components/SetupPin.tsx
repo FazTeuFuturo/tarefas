@@ -89,27 +89,17 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                         return;
                     }
 
-                    // 2. Create or sign in to Supabase Auth with PIN-independent credentials
+                    // 2. Sign in to Supabase Auth with PIN-independent credentials
+                    // (the auth identity was just securely created by the RPC with the exact hero ID)
                     const email = deriveHeroEmail(hero.id);
                     const password = heroAuthPassword(hero.invite_token);
 
-                    let { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+                    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
                     if (signInError) {
-                        // Auth user doesn't exist yet — create it
-                        const { error: signUpError } = await supabase.auth.signUp({ email, password });
-                        if (signUpError && !signUpError.message.includes('already registered')) {
-                            setError('Erro ao criar conta: ' + signUpError.message);
-                            setSaving(false);
-                            return;
-                        }
-                        // Now sign in
-                        const { error: signIn2Error } = await supabase.auth.signInWithPassword({ email, password });
-                        if (signIn2Error) {
-                            setError('Erro ao entrar: ' + signIn2Error.message);
-                            setSaving(false);
-                            return;
-                        }
+                        setError('Erro ao entrar na sessão: ' + signInError.message);
+                        setSaving(false);
+                        return;
                     }
 
                     // 3. Save permanent invite_token to localStorage for future visits

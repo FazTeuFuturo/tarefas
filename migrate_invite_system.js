@@ -99,12 +99,46 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 GRANT EXECUTE ON FUNCTION public.claim_hero_invite(TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION public.claim_hero_invite(TEXT) TO authenticated;
 
--- 4. RPC: Filho define seu PIN e marca link como usado
+-- 4. Função interna para criar conta Auth para o herói com o ID correto
+CREATE OR REPLACE FUNCTION public.create_auth_user(
+    p_id UUID,
+    p_email TEXT,
+    p_password TEXT
+) RETURNS BOOLEAN AS $$
+BEGIN
+    INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role)
+    VALUES (
+        p_id,
+        p_email,
+        crypt(p_password, gen_salt('bf')),
+        now(),
+        '{"provider": "email", "providers": ["email"]}',
+        '{"is_hero": true}',
+        now(),
+        now(),
+        'authenticated'
+    );
+    
+    INSERT INTO auth.identities (id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    VALUES (
+        gen_random_uuid(), p_id, format('{"sub":"%s","email":"%s"}', p_id::text, p_email)::jsonb, 'email', now(), now(), now()
+    );
+
+    RETURN TRUE;
+EXCEPTION WHEN unique_violation THEN
+    UPDATE auth.users SET encrypted_password = crypt(p_password, gen_salt('bf')) WHERE id = p_id;
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 5. RPC: Filho define seu PIN e marca link como usado, gerando a conta de acesso auth
 DROP FUNCTION IF EXISTS public.set_hero_pin(TEXT, TEXT, TEXT);
 CREATE OR REPLACE FUNCTION public.set_hero_pin(p_token TEXT, p_link_id TEXT, p_pin_hash TEXT)
 RETURNS BOOLEAN AS $$
 DECLARE
     v_hero_id UUID;
+    v_hero_email TEXT;
+    v_auth_password TEXT;
 BEGIN
     -- Valida que o token ainda é válido e não foi usado
     SELECT hil.hero_id INTO v_hero_id
@@ -127,6 +161,13 @@ BEGIN
     UPDATE public.hero_invite_links
     SET used_at = now()
     WHERE token::TEXT = p_token AND id::TEXT = p_link_id;
+
+    -- Gera as credenciais derivativas para a conta auth
+    v_hero_email := 'hero_' || replace(v_hero_id::TEXT, '-', '') || '@noreply.familyquest.app';
+    v_auth_password := 'fq_hero_' || substring(replace(p_token, '-', '') from 1 for 20);
+    
+    -- Cria a identidade auth do herói forçando o mesmo ID do perfil (evita duplicação)
+    PERFORM public.create_auth_user(v_hero_id, v_hero_email, v_auth_password);
 
     RETURN TRUE;
 END;

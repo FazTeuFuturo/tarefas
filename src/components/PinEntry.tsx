@@ -40,18 +40,13 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                         const email = deriveHeroEmail(hero.id);
                         const password = heroAuthPassword(hero.invite_token);
 
-                        // Try sign in first
-                        let { data: session, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+                        // Try sign in first (auth identity should already exist from SetupPin)
+                        const { data: session, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
-                        if (signInError || !session.session) {
-                            // Auth user doesn't exist yet — create it and sign in
-                            await supabase.auth.signUp({ email, password });
-                            const { data: session2, error: signIn2Error } = await supabase.auth.signInWithPassword({ email, password });
-                            if (signIn2Error || !session2.session) {
-                                setError('Erro ao iniciar sessão. Contacte o Mestre.');
-                                setDigits(['', '', '', '']);
-                                return;
-                            }
+                        if (signInError || !session?.session) {
+                            setError('Erro de sessão. Peça um novo link ao Mestre.');
+                            setDigits(['', '', '', '']);
+                            return;
                         }
 
                         onSuccess();
