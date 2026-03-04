@@ -110,7 +110,7 @@ BEGIN
     VALUES (
         p_id,
         p_email,
-        crypt(p_password, gen_salt('bf')),
+        extensions.crypt(p_password, extensions.gen_salt('bf')),
         now(),
         '{"provider": "email", "providers": ["email"]}',
         '{"is_hero": true}',
@@ -126,7 +126,7 @@ BEGIN
 
     RETURN TRUE;
 EXCEPTION WHEN unique_violation THEN
-    UPDATE auth.users SET encrypted_password = crypt(p_password, gen_salt('bf')) WHERE id = p_id;
+    UPDATE auth.users SET encrypted_password = extensions.crypt(p_password, extensions.gen_salt('bf')) WHERE id = p_id;
     RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
