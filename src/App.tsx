@@ -8,6 +8,26 @@ import { ProfilePicker } from './components/ProfilePicker';
 import { PinEntry } from './components/PinEntry';
 import { supabase } from './lib/supabase';
 
+// ------------------------------------------------------------------
+// Helpers for the child's local session (independent device)
+// ------------------------------------------------------------------
+const HERO_SESSION_KEY = 'fq_saved_hero_token';
+
+function getSavedHeroToken(): string | null {
+    return localStorage.getItem(HERO_SESSION_KEY);
+}
+
+function saveHeroToken(token: string) {
+    localStorage.setItem(HERO_SESSION_KEY, token);
+}
+
+function clearHeroToken() {
+    localStorage.removeItem(HERO_SESSION_KEY);
+}
+
+// ------------------------------------------------------------------
+// Main router
+// ------------------------------------------------------------------
 function AppRouter() {
     const { user, profile, activeProfile, isLoading, isHeroMode, switchToHero, exitHeroMode } = useAuth();
     const params = React.useMemo(() => new URLSearchParams(window.location.search), []);
@@ -24,8 +44,11 @@ function AppRouter() {
         return new URLSearchParams(window.location.search).get('hero');
     }, []);
 
-    // Hero session via invite link (cross-device): verified hero stored by PinEntry success
+    // Verified hero (from invite link or saved session). Once set, renders HeroDashboard.
     const [inviteHero, setInviteHero] = React.useState<any | null>(null);
+
+    // Saved token from a previous visit on this device
+    const savedToken = React.useMemo(() => getSavedHeroToken(), []);
 
     // Loading
     if (isLoading) {
@@ -39,22 +62,39 @@ function AppRouter() {
         );
     }
 
-    // ─── INVITE LINK FLOW (cross-device) ────────────────────────────────────────
-    // If there's a ?hero= token and we're not yet logged in via Supabase
+    // ─── INVITE LINK FLOW ─────────────────────────────────────────────────────
+    // Fresh invite link: ?hero=<token> — show PIN and, on success, save token to localStorage
     if (!user && heroInviteToken && !inviteHero) {
         return (
             <HeroInviteLogin
                 inviteToken={heroInviteToken}
                 onSuccess={(hero) => {
-                    // Clean the URL without reloading
-                    window.history.replaceState({}, '', '/');
+                    saveHeroToken(hero.invite_token); // remember this device
+                    window.history.replaceState({}, '', '/'); // clean URL
                     setInviteHero(hero);
                 }}
             />
         );
     }
 
-    // Hero logged in via invite link — show HeroDashboard directly with exit button
+    // Saved session: returning child on same device — ask for PIN then open HeroDashboard
+    if (!user && !inviteHero && savedToken && !heroInviteToken) {
+        return (
+            <HeroInviteLogin
+                inviteToken={savedToken}
+                onSuccess={(hero) => {
+                    setInviteHero(hero);
+                }}
+                savedSession // flag to show "logout" option instead of generic back
+                onLogout={() => {
+                    clearHeroToken();
+                    window.location.href = '/';
+                }}
+            />
+        );
+    }
+
+    // Hero authenticated — show HeroDashboard
     if (!user && inviteHero) {
         return (
             <HeroDashboard
@@ -62,6 +102,7 @@ function AppRouter() {
                 heroExitButton={
                     <button
                         onClick={() => {
+                            clearHeroToken();
                             setInviteHero(null);
                             window.location.href = '/';
                         }}
@@ -77,7 +118,7 @@ function AppRouter() {
         );
     }
 
-    // NOT logged in via Supabase
+    // ─── SUPABASE AUTH FLOWS ──────────────────────────────────────────────────
     if (!user || !profile) {
         if (showPicker && heroes.length > 0 && !pendingHero) {
             return (
@@ -115,7 +156,7 @@ function AppRouter() {
         return <Login onLoginSuccess={() => { }} onNavigateRegister={() => setAuthView('register')} />;
     }
 
-    // AUTHENTICATED — same-device hero mode via profile picker (PIN already verified in MasterDashboard)
+    // AUTHENTICATED — same-device hero mode via profile picker
     if (isHeroMode && activeProfile) {
         return (
             <HeroDashboard
@@ -149,8 +190,17 @@ function AppRouter() {
     return <HeroDashboard />;
 }
 
-/** Handles the ?hero=<token> invite link flow for own-device login */
-function HeroInviteLogin({ inviteToken, onSuccess }: { inviteToken: string; onSuccess: (hero: any) => void }) {
+// ------------------------------------------------------------------
+// HeroInviteLogin — fetches hero by invite_token, shows PinEntry
+// ------------------------------------------------------------------
+interface HeroInviteLoginProps {
+    inviteToken: string;
+    onSuccess: (hero: any) => void;
+    savedSession?: boolean;
+    onLogout?: () => void;
+}
+
+function HeroInviteLogin({ inviteToken, onSuccess, savedSession, onLogout }: HeroInviteLoginProps) {
     const [hero, setHero] = React.useState<any | null>(null);
     const [loading, setLoading] = React.useState(true);
     const [notFound, setNotFound] = React.useState(false);
@@ -177,9 +227,19 @@ function HeroInviteLogin({ inviteToken, onSuccess }: { inviteToken: string; onSu
                 <p style={{ fontSize: 40 }}>❌</p>
                 <p style={{ fontWeight: 800 }}>Link inválido ou expirado.</p>
                 <p style={{ opacity: 0.5, fontSize: 13 }}>Peça ao Mestre um novo link.</p>
-                <button onClick={() => window.location.href = '/'} style={{ marginTop: 16, padding: '8px 20px', border: '2px solid #fff', background: 'none', color: '#fff', fontWeight: 800, borderRadius: 8, cursor: 'pointer' }}>
-                    Voltar ao início
-                </button>
+                {savedSession && onLogout && (
+                    <button
+                        onClick={onLogout}
+                        style={{ marginTop: 16, padding: '8px 20px', border: '2px solid #fff', background: 'none', color: '#fff', fontWeight: 800, borderRadius: 8, cursor: 'pointer' }}
+                    >
+                        🔄 Trocar de herói
+                    </button>
+                )}
+                {!savedSession && (
+                    <button onClick={() => window.location.href = '/'} style={{ marginTop: 16, padding: '8px 20px', border: '2px solid #fff', background: 'none', color: '#fff', fontWeight: 800, borderRadius: 8, cursor: 'pointer' }}>
+                        Voltar ao início
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -188,10 +248,9 @@ function HeroInviteLogin({ inviteToken, onSuccess }: { inviteToken: string; onSu
         <PinEntry
             hero={hero}
             onSuccess={(heroData) => {
-                // No reload — just pass the verified hero up via callback
                 onSuccess(heroData);
             }}
-            onCancel={() => { window.location.href = '/'; }}
+            onCancel={savedSession && onLogout ? onLogout : () => { window.location.href = '/'; }}
         />
     );
 }
