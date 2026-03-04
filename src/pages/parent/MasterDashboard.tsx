@@ -488,13 +488,24 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                             <button
                                                 className="neo-button"
                                                 style={{ width: '100%', background: '#f5f5f5', fontSize: 12, padding: '5px 0' }}
-                                                onClick={() => {
-                                                    const link = `${window.location.origin}?hero=${hero.invite_token || ''}`;
-                                                    navigator.clipboard.writeText(link)
-                                                        .then(() => alert(`✅ Link copiado!\n\n${link}`))
-                                                        .catch(() => alert(link));
+                                                onClick={async () => {
+                                                    try {
+                                                        const { supabase: sb } = await import('../../lib/supabase');
+                                                        const { data: token, error } = await sb.rpc('generate_hero_invite', { p_hero_id: hero.id });
+                                                        if (error || !token) {
+                                                            alert('Erro ao gerar link. Tente novamente.');
+                                                            return;
+                                                        }
+                                                        const link = `${window.location.origin}?invite=${token}`;
+                                                        navigator.clipboard.writeText(link)
+                                                            .then(() => alert(`✅ Link copiado! Válido por 48h.\n\nEnvie para ${hero.nome} acessar e criar o PIN.\n\n${link}`))
+                                                            .catch(() => alert(link));
+                                                    } catch (err: any) {
+                                                        alert('Erro: ' + err.message);
+                                                    }
                                                 }}
                                             >🔗 Compartilhar</button>
+
                                         </div>
                                     </div>
                                 ))}

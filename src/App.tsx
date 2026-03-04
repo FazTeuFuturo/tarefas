@@ -6,52 +6,61 @@ import MasterDashboard from './pages/parent/MasterDashboard';
 import HeroDashboard from './pages/hero/HeroDashboard';
 import { ProfilePicker } from './components/ProfilePicker';
 import { PinEntry } from './components/PinEntry';
+import { SetupPin } from './components/SetupPin';
 import { supabase } from './lib/supabase';
 
 // ------------------------------------------------------------------
-// Helpers for the child's local session (independent device)
+// Persistent hero session on child's device
 // ------------------------------------------------------------------
 const HERO_SESSION_KEY = 'fq_saved_hero_token';
-
-function getSavedHeroToken(): string | null {
-    return localStorage.getItem(HERO_SESSION_KEY);
-}
-
-function saveHeroToken(token: string) {
-    localStorage.setItem(HERO_SESSION_KEY, token);
-}
-
-function clearHeroToken() {
-    localStorage.removeItem(HERO_SESSION_KEY);
-}
+const getSavedHeroToken = () => localStorage.getItem(HERO_SESSION_KEY);
+const saveHeroToken = (token: string) => localStorage.setItem(HERO_SESSION_KEY, token);
+const clearHeroToken = () => localStorage.removeItem(HERO_SESSION_KEY);
 
 // ------------------------------------------------------------------
-// Main router
+// AppRouter — core routing logic
 // ------------------------------------------------------------------
 function AppRouter() {
     const { user, profile, activeProfile, isLoading, isHeroMode, switchToHero, exitHeroMode } = useAuth();
     const params = React.useMemo(() => new URLSearchParams(window.location.search), []);
+
     const [authView, setAuthView] = React.useState<'login' | 'register'>(
         params.has('invite_clan') ? 'register' : 'login'
     );
-    const [heroes, _setHeroes] = React.useState<any[]>([]);
-    const [_, _setHeroesLoaded] = React.useState(false);
     const [showPicker, setShowPicker] = React.useState(false);
+    const [heroes] = React.useState<any[]>([]);
     const [pendingHero, setPendingHero] = React.useState<any | null>(null);
 
-    // Invite link: ?hero=<invite_token>
-    const heroInviteToken = React.useMemo(() => {
-        return new URLSearchParams(window.location.search).get('hero');
-    }, []);
+    // One-time invite token from URL: ?invite=<temp_token>
+    const inviteToken = React.useMemo(() => params.get('invite'), []);
 
-    // Verified hero (from invite link or saved session). Once set, renders HeroDashboard.
-    const [inviteHero, setInviteHero] = React.useState<any | null>(null);
-
-    // Saved token from a previous visit on this device
+    // Persistent token stored on this device after first access
     const savedToken = React.useMemo(() => getSavedHeroToken(), []);
 
+    // Verified hero — once set shows HeroDashboard
+    const [inviteHero, setInviteHero] = React.useState<any | null>(null);
+
+    // Hero data fetched via savedToken, awaiting PIN
+    const [savedHero, setSavedHero] = React.useState<any | null>(null);
+    const [savedHeroLoaded, setSavedHeroLoaded] = React.useState(false);
+
+    // Load returning hero from saved token (runs once on mount)
+    React.useEffect(() => {
+        if (user || inviteToken || !savedToken) {
+            setSavedHeroLoaded(true);
+            return;
+        }
+        supabase
+            .rpc('get_hero_by_invite', { token: savedToken })
+            .then(({ data }) => {
+                if (data) setSavedHero(data);
+                else clearHeroToken(); // token no longer valid
+                setSavedHeroLoaded(true);
+            });
+    }, []);
+
     // Loading
-    if (isLoading) {
+    if (isLoading || (!savedHeroLoaded && !user && !inviteToken)) {
         return (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
                 <div style={{ textAlign: 'center' }}>
@@ -62,63 +71,57 @@ function AppRouter() {
         );
     }
 
-    // ─── INVITE LINK FLOW ─────────────────────────────────────────────────────
-    // Fresh invite link: ?hero=<token> — show PIN and, on success, save token to localStorage
-    if (!user && heroInviteToken && !inviteHero) {
+    // ─── HERO INVITE FLOW (one-time link) ────────────────────────────────────
+    if (!user && inviteToken && !inviteHero) {
         return (
-            <HeroInviteLogin
-                inviteToken={heroInviteToken}
+            <HeroInviteFlow
+                inviteToken={inviteToken}
                 onSuccess={(hero) => {
-                    saveHeroToken(hero.invite_token); // remember this device
-                    window.history.replaceState({}, '', '/'); // clean URL
+                    saveHeroToken(hero.invite_token);
+                    window.history.replaceState({}, '', '/');
                     setInviteHero(hero);
                 }}
+                onCancel={() => { window.history.replaceState({}, '', '/'); window.location.reload(); }}
             />
         );
     }
 
-    // Saved session: returning child on same device — ask for PIN then open HeroDashboard
-    if (!user && !inviteHero && savedToken && !heroInviteToken) {
-        return (
-            <HeroInviteLogin
-                inviteToken={savedToken}
-                onSuccess={(hero) => {
-                    setInviteHero(hero);
-                }}
-                savedSession // flag to show "logout" option instead of generic back
-                onLogout={() => {
-                    clearHeroToken();
-                    window.location.href = '/';
-                }}
-            />
-        );
-    }
+    // ─── VERIFIED HERO — show dashboard ─────────────────────────────────────
+    const exitBtn = (onExit: () => void) => (
+        <button
+            onClick={onExit}
+            style={{
+                background: 'none', border: '2px solid #000',
+                borderRadius: 6, padding: '4px 10px',
+                fontWeight: 800, fontSize: 12, cursor: 'pointer'
+            }}
+        >↩ Sair</button>
+    );
 
-    // Hero authenticated — show HeroDashboard
     if (!user && inviteHero) {
         return (
             <HeroDashboard
                 heroOverride={inviteHero}
-                heroExitButton={
-                    <button
-                        onClick={() => {
-                            clearHeroToken();
-                            setInviteHero(null);
-                            window.location.href = '/';
-                        }}
-                        style={{
-                            background: 'none', border: '2px solid #000',
-                            borderRadius: 6, padding: '4px 10px',
-                            fontWeight: 800, fontSize: 12, cursor: 'pointer'
-                        }}
-                        title="Sair"
-                    >↩ Sair</button>
-                }
+                heroExitButton={exitBtn(() => { clearHeroToken(); setInviteHero(null); window.location.href = '/'; })}
             />
         );
     }
 
-    // ─── SUPABASE AUTH FLOWS ──────────────────────────────────────────────────
+    // ─── RETURNING CHILD — saved session, ask PIN ────────────────────────────
+    if (!user && savedHero) {
+        return (
+            <PinEntry
+                hero={savedHero}
+                onSuccess={(verifiedHero) => {
+                    setInviteHero(verifiedHero);
+                    setSavedHero(null);
+                }}
+                onCancel={() => { clearHeroToken(); setSavedHero(null); }}
+            />
+        );
+    }
+
+    // ─── SUPABASE AUTH FLOWS ─────────────────────────────────────────────────
     if (!user || !profile) {
         if (showPicker && heroes.length > 0 && !pendingHero) {
             return (
@@ -129,7 +132,6 @@ function AppRouter() {
                 />
             );
         }
-
         if (pendingHero) {
             return (
                 <PinEntry
@@ -138,10 +140,7 @@ function AppRouter() {
                         const { deriveHeroEmail, deriveHeroPassword } = await import('./lib/pinUtils');
                         const email = deriveHeroEmail(hero.id);
                         const password = deriveHeroPassword('', hero.invite_token);
-                        const { error } = await supabase.auth.signInWithPassword({ email, password });
-                        if (error) {
-                            console.error('Hero login failed:', error);
-                        }
+                        await supabase.auth.signInWithPassword({ email, password });
                         setPendingHero(null);
                         setShowPicker(false);
                     }}
@@ -149,40 +148,25 @@ function AppRouter() {
                 />
             );
         }
-
         if (authView === 'register') {
             return <Register onRegisterSuccess={() => { }} onNavigateLogin={() => setAuthView('login')} />;
         }
         return <Login onLoginSuccess={() => { }} onNavigateRegister={() => setAuthView('register')} />;
     }
 
-    // AUTHENTICATED — same-device hero mode via profile picker
+    // ─── AUTHENTICATED — hero mode on same device ────────────────────────────
     if (isHeroMode && activeProfile) {
         return (
             <HeroDashboard
-                heroExitButton={
-                    <button
-                        onClick={exitHeroMode}
-                        style={{
-                            background: 'none', border: '2px solid #000',
-                            borderRadius: 6, padding: '4px 10px',
-                            fontWeight: 800, fontSize: 12, cursor: 'pointer'
-                        }}
-                        title="Trocar de herói"
-                    >↩ Heróis</button>
-                }
+                heroExitButton={exitBtn(exitHeroMode)}
             />
         );
     }
 
-    // Normal routing by role
     if (profile.role === 'parent') {
         return (
             <MasterDashboard
-                onSwitchToHero={(hero) => {
-                    setPendingHero(null);
-                    switchToHero(hero);
-                }}
+                onSwitchToHero={(hero) => switchToHero(hero)}
             />
         );
     }
@@ -191,66 +175,71 @@ function AppRouter() {
 }
 
 // ------------------------------------------------------------------
-// HeroInviteLogin — fetches hero by invite_token, shows PinEntry
+// HeroInviteFlow — handles the one-time ?invite= token flow
+// Detects if hero has a PIN (returning) or not (first time → SetupPin)
 // ------------------------------------------------------------------
-interface HeroInviteLoginProps {
+interface HeroInviteFlowProps {
     inviteToken: string;
     onSuccess: (hero: any) => void;
-    savedSession?: boolean;
-    onLogout?: () => void;
+    onCancel: () => void;
 }
 
-function HeroInviteLogin({ inviteToken, onSuccess, savedSession, onLogout }: HeroInviteLoginProps) {
+function HeroInviteFlow({ inviteToken, onSuccess, onCancel }: HeroInviteFlowProps) {
+    const [state, setState] = React.useState<'loading' | 'setup_pin' | 'enter_pin' | 'invalid'>('loading');
     const [hero, setHero] = React.useState<any | null>(null);
-    const [loading, setLoading] = React.useState(true);
-    const [notFound, setNotFound] = React.useState(false);
 
     React.useEffect(() => {
         supabase
-            .rpc('get_hero_by_invite', { token: inviteToken })
+            .rpc('claim_hero_invite', { p_token: inviteToken })
             .then(({ data, error }) => {
-                if (error || !data) { setNotFound(true); }
-                else { setHero(data); }
-                setLoading(false);
+                if (error || !data) { setState('invalid'); return; }
+                setHero({ ...data, temp_token: inviteToken });
+                setState(data.pin_set ? 'enter_pin' : 'setup_pin');
             });
     }, [inviteToken]);
 
-    if (loading) return (
+    if (state === 'loading') return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
-            <p style={{ color: '#fff', fontWeight: 800 }}>Procurando herói...</p>
-        </div>
-    );
-
-    if (notFound || !hero) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
-            <div style={{ textAlign: 'center', color: '#fff' }}>
-                <p style={{ fontSize: 40 }}>❌</p>
-                <p style={{ fontWeight: 800 }}>Link inválido ou expirado.</p>
-                <p style={{ opacity: 0.5, fontSize: 13 }}>Peça ao Mestre um novo link.</p>
-                {savedSession && onLogout && (
-                    <button
-                        onClick={onLogout}
-                        style={{ marginTop: 16, padding: '8px 20px', border: '2px solid #fff', background: 'none', color: '#fff', fontWeight: 800, borderRadius: 8, cursor: 'pointer' }}
-                    >
-                        🔄 Trocar de herói
-                    </button>
-                )}
-                {!savedSession && (
-                    <button onClick={() => window.location.href = '/'} style={{ marginTop: 16, padding: '8px 20px', border: '2px solid #fff', background: 'none', color: '#fff', fontWeight: 800, borderRadius: 8, cursor: 'pointer' }}>
-                        Voltar ao início
-                    </button>
-                )}
+            <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>⚔️</div>
+                <p style={{ color: '#fff', fontWeight: 800 }}>Procurando herói...</p>
             </div>
         </div>
     );
 
+    if (state === 'invalid' || !hero) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
+            <div style={{ textAlign: 'center', color: '#fff' }}>
+                <p style={{ fontSize: 40 }}>⏰</p>
+                <p style={{ fontWeight: 800 }}>Link expirado ou inválido.</p>
+                <p style={{ opacity: 0.5, fontSize: 13 }}>Peça ao Mestre um novo link de convite.</p>
+                <button
+                    onClick={onCancel}
+                    style={{ marginTop: 16, padding: '8px 20px', border: '2px solid #fff', background: 'none', color: '#fff', fontWeight: 800, borderRadius: 8, cursor: 'pointer' }}
+                >
+                    ← Voltar
+                </button>
+            </div>
+        </div>
+    );
+
+    // First time — child sets their own PIN
+    if (state === 'setup_pin') {
+        return (
+            <SetupPin
+                hero={hero}
+                onSuccess={(h) => onSuccess(h)}
+                onCancel={onCancel}
+            />
+        );
+    }
+
+    // Returning via link (e.g. different device) — verify existing PIN
     return (
         <PinEntry
             hero={hero}
-            onSuccess={(heroData) => {
-                onSuccess(heroData);
-            }}
-            onCancel={savedSession && onLogout ? onLogout : () => { window.location.href = '/'; }}
+            onSuccess={(h) => onSuccess(h)}
+            onCancel={onCancel}
         />
     );
 }
