@@ -139,6 +139,7 @@ DECLARE
     v_hero_id UUID;
     v_hero_email TEXT;
     v_auth_password TEXT;
+    v_invite_token TEXT;
 BEGIN
     -- Valida que o token ainda é válido e não foi usado
     SELECT hil.hero_id INTO v_hero_id
@@ -152,6 +153,11 @@ BEGIN
         RETURN FALSE;
     END IF;
 
+    -- Pega o token de convite permanente
+    SELECT invite_token INTO v_invite_token
+    FROM public.profiles
+    WHERE id = v_hero_id;
+
     -- Salva o PIN hash no perfil
     UPDATE public.profiles
     SET pin_hash = p_pin_hash
@@ -164,7 +170,7 @@ BEGIN
 
     -- Gera as credenciais derivativas para a conta auth
     v_hero_email := 'hero_' || replace(v_hero_id::TEXT, '-', '') || '@noreply.familyquest.app';
-    v_auth_password := 'fq_hero_' || substring(replace(p_token, '-', '') from 1 for 20);
+    v_auth_password := 'fq_hero_' || substring(replace(v_invite_token, '-', '') from 1 for 20);
     
     -- Cria a identidade auth do herói forçando o mesmo ID do perfil (evita duplicação)
     PERFORM public.create_auth_user(v_hero_id, v_hero_email, v_auth_password);
