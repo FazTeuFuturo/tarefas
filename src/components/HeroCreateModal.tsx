@@ -11,11 +11,12 @@ interface HeroCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
     parentProfileId: string;
+    clanId: string;
     onCreated: () => void;
 }
 
 export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
-    isOpen, onClose, parentProfileId, onCreated
+    isOpen, onClose, parentProfileId, clanId, onCreated
 }) => {
     const [step, setStep] = useState<'info' | 'pin' | 'confirm'>('info');
     const [nome, setNome] = useState('');
@@ -86,6 +87,7 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
                 pin_hash: pinHash,
                 invite_token: inviteToken,
                 created_by: parentProfileId,
+                clan_id: clanId,
                 data_nascimento: dataNascimento || null,
                 foto_url: customAvatarUrl || null,
             });

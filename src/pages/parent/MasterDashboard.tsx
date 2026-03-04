@@ -580,6 +580,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 isOpen={isHeroCreateOpen}
                 onClose={() => setIsHeroCreateOpen(false)}
                 parentProfileId={profile.id}
+                clanId={profile.clan_id}
                 onCreated={() => {
                     setIsHeroCreateOpen(false);
                     // Força o recarregamento temporário para refletir o novo herói na tela
