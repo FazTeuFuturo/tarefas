@@ -119,9 +119,9 @@ BEGIN
         'authenticated'
     );
     
-    INSERT INTO auth.identities (id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
     VALUES (
-        gen_random_uuid(), p_id, format('{"sub":"%s","email":"%s"}', p_id::text, p_email)::jsonb, 'email', now(), now(), now()
+        gen_random_uuid(), p_id, format('{"sub":"%s","email":"%s"}', p_id::text, p_email)::jsonb, 'email', p_id::text, now(), now(), now()
     );
 
     RETURN TRUE;
