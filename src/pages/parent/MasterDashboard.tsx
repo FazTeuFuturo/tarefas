@@ -389,12 +389,18 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         >
                                             ✕
                                         </button>
-                                        <img
-                                            src={/^https?:\/\//.test(hero.avatar || '') ? hero.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero.nome}`}
-                                            style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #000', margin: '0 auto', display: 'block', objectFit: 'cover' }}
-                                            alt={hero.nome}
-                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero.nome}`; }}
-                                        />
+                                        {/^https?:\/\//.test(hero.avatar || '') ? (
+                                            <img
+                                                src={hero.avatar}
+                                                style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #000', margin: '0 auto', display: 'block', objectFit: 'cover' }}
+                                                alt={hero.nome}
+                                                onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero.nome}`; }}
+                                            />
+                                        ) : (
+                                            <div style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #000', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, background: 'var(--color-primary-light)' }}>
+                                                {hero.avatar || '🦸'}
+                                            </div>
+                                        )}
                                         <div>
                                             <strong style={{ fontSize: 13, display: 'block' }}>{hero.nome}</strong>
                                             <span style={{ fontSize: 11, opacity: 0.8 }}>
