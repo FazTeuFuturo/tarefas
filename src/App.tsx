@@ -123,10 +123,7 @@ function HeroInviteLogin({ inviteToken }: { inviteToken: string }) {
 
     React.useEffect(() => {
         supabase
-            .from('profiles')
-            .select('id, nome, avatar, nivel, xp, pin_hash, invite_token, role')
-            .eq('invite_token', inviteToken)
-            .single()
+            .rpc('get_hero_by_invite', { token: inviteToken })
             .then(({ data, error }) => {
                 if (error || !data) { setNotFound(true); }
                 else { setHero(data); }
