@@ -29,6 +29,7 @@ interface AuthContextType {
     refreshProfile: () => Promise<void>;
     switchToHero: (hero: Profile) => void;   // troca de perfil sem re-auth Supabase (mesmo dispositivo)
     exitHeroMode: () => void;                // volta para o Mestre
+    clearActiveProfile: () => void;          // limpa a seleção para voltar à tela de seleção de perfis
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,11 +73,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setUser(session.user);
                     const p = await loadProfile(session.user.id);
                     setProfile(p);
-                    setActiveProfile(p);
+
+                    const savedActiveProfileId = localStorage.getItem('fq_active_profile_id');
+                    if (savedActiveProfileId && savedActiveProfileId !== session.user.id) {
+                        const savedProfile = await loadProfile(savedActiveProfileId);
+                        if (savedProfile) {
+                            setActiveProfile(savedProfile);
+                            setIsHeroMode(true);
+                        } else {
+                            setActiveProfile(p);
+                            setIsHeroMode(false);
+                        }
+                    } else if (savedActiveProfileId === session.user.id) {
+                        setActiveProfile(p);
+                        setIsHeroMode(false);
+                    } else {
+                        // Se não tem nada salvo, começa na tela de seleção de perfis (Netflix)
+                        setActiveProfile(null);
+                        setIsHeroMode(false);
+                    }
                 } else {
                     setUser(null);
                     setProfile(null);
                     setActiveProfile(null);
+                    setIsHeroMode(false);
                 }
                 setIsLoading(false);
             }
@@ -88,14 +108,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         setUser(session.user);
                         const p = await loadProfile(session.user.id);
                         setProfile(p);
-                        // Only overwrite activeProfile if not in hero mode
-                        setActiveProfile(prev => (isHeroMode ? prev : p));
+
+                        // Respeita o isHeroMode ou a seleção existente, se houver
+                        if (!isHeroMode && !localStorage.getItem('fq_active_profile_id')) {
+                            setActiveProfile(null);
+                        }
                     }
                 } else if (event === 'SIGNED_OUT') {
                     setUser(null);
                     setProfile(null);
                     setActiveProfile(null);
                     setIsHeroMode(false);
+                    localStorage.removeItem('fq_active_profile_id');
                 }
                 setIsLoading(false);
             });
@@ -118,17 +142,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const switchToHero = (hero: Profile) => {
         setActiveProfile(hero);
         setIsHeroMode(true);
+        localStorage.setItem('fq_active_profile_id', hero.id);
     };
 
     /** Return to the master's profile */
     const exitHeroMode = () => {
         setActiveProfile(profile);
         setIsHeroMode(false);
+        localStorage.setItem('fq_active_profile_id', profile?.id || '');
+    };
+
+    /** Limpa a seleção e volta para a "Tela Netflix" (onde o Mestre e Heróis podem ser escolhidos) */
+    const clearActiveProfile = () => {
+        setActiveProfile(null);
+        setIsHeroMode(false);
+        localStorage.removeItem('fq_active_profile_id');
     };
 
     const signOut = async () => {
         setIsHeroMode(false);
         setActiveProfile(null);
+        localStorage.removeItem('fq_active_profile_id');
         await supabase.auth.signOut();
     };
 

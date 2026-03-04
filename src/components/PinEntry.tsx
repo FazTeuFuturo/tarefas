@@ -1,25 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { verifyPin, deriveHeroEmail, heroAuthPassword } from '../lib/pinUtils';
+import { hashPin, verifyPin } from '../lib/pinUtils';
 import { supabase } from '../lib/supabase';
 
 interface HeroProfile {
     id: string;
     nome: string;
     avatar: string;
-    pin_hash: string;
-    invite_token: string;
+    pin_hash?: string;
+    invite_token?: string; // Mantido para caso precisemos de um salt persistente
     nivel: number;
     xp: number;
 }
 
 interface PinEntryProps {
     hero: HeroProfile;
-    onSuccess: () => void; // Auth session created — caller just needs to re-render
+    onSuccess: () => void;
     onCancel: () => void;
 }
 
 export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel }) => {
+    // Se o herói não tiver pin_hash, significa que é o 1º acesso e ele deve CRIAR o PIN
+    const isSetupMode = !hero.pin_hash;
+    const [step, setStep] = useState<'enter' | 'create' | 'confirm'>(isSetupMode ? 'create' : 'enter');
+
     const [digits, setDigits] = useState<string[]>(['', '', '', '']);
+    const [firstPin, setFirstPin] = useState<string>('');
+
     const [error, setError] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
     const [shake, setShake] = useState(false);
@@ -31,49 +37,86 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
     useEffect(() => {
         const pin = digits.join('');
         if (pin.length === 4) {
-            (async () => {
+            handlePinComplete(pin);
+        }
+    }, [digits]);
+
+    const handlePinComplete = async (pin: string) => {
+        if (step === 'enter') {
+            setIsVerifying(true);
+            try {
+                // Para compatibilidade, passamos hero.invite_token (ou string vazia se legado)
+                const safeToken = hero.invite_token || hero.id;
+                const safeHash = hero.pin_hash || '';
+                const ok = await verifyPin(pin, safeToken, safeHash);
+
+                if (ok) {
+                    setError('');
+                    onSuccess();
+                } else {
+                    const newAttempts = attempts + 1;
+                    setAttempts(newAttempts);
+                    if (newAttempts >= MAX_ATTEMPTS) {
+                        setError('Muitas tentativas erradas. Peça ao Pai para resetar o PIN.');
+                    } else {
+                        setError(`PIN incorreto. ${MAX_ATTEMPTS - newAttempts} tentativa(s) restante(s).`);
+                    }
+                    setShake(true);
+                    setTimeout(() => { setShake(false); setDigits(['', '', '', '']); }, 600);
+                }
+            } finally {
+                setIsVerifying(false);
+            }
+        }
+        else if (step === 'create') {
+            setFirstPin(pin);
+            setStep('confirm');
+            setDigits(['', '', '', '']);
+            setError('');
+        }
+        else if (step === 'confirm') {
+            if (pin === firstPin) {
                 setIsVerifying(true);
                 try {
-                    const ok = await verifyPin(pin, hero.invite_token, hero.pin_hash);
-                    if (ok) {
-                        setError('');
-                        const email = deriveHeroEmail(hero.id);
-                        const password = heroAuthPassword(hero.invite_token);
+                    // Se não tiver invite_token, usamos o hero.id como salt base da criptografia do PIN
+                    const saltToken = hero.invite_token || hero.id;
+                    const newHash = await hashPin(pin, saltToken);
 
-                        // Try sign in first (auth identity should already exist from SetupPin)
-                        const { data: session, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ pin_hash: newHash, invite_token: saltToken })
+                        .eq('id', hero.id);
 
-                        if (signInError || !session?.session) {
-                            setError('Erro de sessão. Peça um novo link ao Mestre.');
-                            setDigits(['', '', '', '']);
-                            return;
-                        }
+                    if (updateError) throw updateError;
 
-                        onSuccess();
-                    } else {
-                        const newAttempts = attempts + 1;
-                        setAttempts(newAttempts);
-                        if (newAttempts >= MAX_ATTEMPTS) {
-                            setError('Muitas tentativas erradas. Peça ao Mestre para resetar.');
-                        } else {
-                            setError(`PIN incorreto. ${MAX_ATTEMPTS - newAttempts} tentativa(s) restante(s).`);
-                        }
-                        setShake(true);
-                        setTimeout(() => { setShake(false); setDigits(['', '', '', '']); }, 600);
-                    }
+                    hero.pin_hash = newHash;
+                    hero.invite_token = saltToken;
+                    onSuccess();
+                } catch (err: any) {
+                    setError('Erro ao salvar PIN: ' + err.message);
+                    setShake(true);
+                    setTimeout(() => { setShake(false); setDigits(['', '', '', '']); }, 600);
                 } finally {
                     setIsVerifying(false);
                 }
-            })();
+            } else {
+                setError('Os PINs não combinam. Tente novamente.');
+                setShake(true);
+                setTimeout(() => {
+                    setShake(false);
+                    setStep('create');
+                    setFirstPin('');
+                    setDigits(['', '', '', '']);
+                }, 1000);
+            }
         }
-    }, [digits]);
+    };
 
     const handleKey = (key: string) => {
         if (isLocked || isVerifying) return;
         if (key === 'DEL') {
             setDigits(prev => {
                 const arr = [...prev];
-                // Find last filled position
                 for (let i = 3; i >= 0; i--) {
                     if (arr[i] !== '') { arr[i] = ''; break; }
                 }
@@ -85,15 +128,12 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
         if (!/^\d$/.test(key)) return;
         setDigits(prev => {
             const arr = [...prev];
-            // Find first empty position
             for (let i = 0; i < 4; i++) {
                 if (arr[i] === '') { arr[i] = key; break; }
             }
             return arr;
         });
     };
-
-    const filledCount = digits.filter(d => d !== '').length;
 
     const isAvatarUrl = /^https?:\/\//.test(hero.avatar || '');
 
@@ -105,7 +145,6 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
             alignItems: 'center', justifyContent: 'center',
             gap: 24,
         }}>
-            {/* Avatar + Nome */}
             <div style={{ textAlign: 'center' }}>
                 <div style={{
                     width: 90, height: 90,
@@ -123,13 +162,20 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                         <span style={{ fontSize: 50 }}>{hero.avatar || '🦸'}</span>
                     )}
                 </div>
-                <h2 style={{ color: '#fff', margin: 0, fontSize: 22 }}>{hero.nome}</h2>
-                <p style={{ color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', fontSize: 13 }}>Nível {hero.nivel} · ⭐ {hero.xp} XP</p>
+                <h2 style={{ color: '#fff', margin: 0, fontSize: 22 }}>
+                    {step === 'enter' ? `Bem-vindo de volta, ${hero.nome}!` : `Olá, ${hero.nome}!`}
+                </h2>
+                {step === 'enter' && (
+                    <p style={{ color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', fontSize: 13 }}>Nível {hero.nivel} · ⭐ {hero.xp} XP</p>
+                )}
             </div>
 
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 800, margin: 0 }}>Digite seu PIN</p>
+            <p style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 800, margin: 0 }}>
+                {step === 'enter' && 'Digite seu PIN secreto'}
+                {step === 'create' && 'Crie um PIN secreto de 4 números'}
+                {step === 'confirm' && 'Confirme seu novo PIN'}
+            </p>
 
-            {/* PIN Dots */}
             <div
                 className={shake ? 'shake-animation' : ''}
                 style={{ display: 'flex', gap: 16 }}
@@ -145,69 +191,49 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                 ))}
             </div>
 
-            {/* Error */}
-            {error && (
-                <div style={{
-                    background: 'var(--color-danger)', color: '#fff',
-                    fontWeight: 800, fontSize: 13, padding: '8px 16px',
-                    borderRadius: 8, border: '2px solid rgba(255,255,255,0.3)',
-                    textAlign: 'center', maxWidth: 280
-                }}>
-                    {error}
-                </div>
-            )}
+            {error && <p style={{ color: 'var(--color-danger)', fontWeight: 800, margin: 0 }}>{error}</p>}
+            {isVerifying && <p style={{ color: 'var(--color-primary)', fontWeight: 800, margin: 0 }}>Validando...</p>}
 
-            {/* Numpad */}
-            {!isLocked && (
-                <div style={{
-                    display: 'grid', gridTemplateColumns: 'repeat(3, 72px)',
-                    gap: 12,
-                }}>
-                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'DEL'].map((key, i) => {
-                        if (key === '') return <div key={i} />;
-                        return (
-                            <button
-                                key={key + i}
-                                onClick={() => handleKey(key)}
-                                disabled={isVerifying || (key !== 'DEL' && filledCount >= 4)}
-                                style={{
-                                    width: 72, height: 72,
-                                    borderRadius: '50%',
-                                    border: '3px solid rgba(255,255,255,0.3)',
-                                    background: isVerifying ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)',
-                                    color: '#fff',
-                                    fontSize: key === 'DEL' ? 18 : 26,
-                                    fontWeight: 800,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.1s',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}
-                                onMouseDown={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')}
-                                onMouseUp={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-                            >
-                                {key === 'DEL' ? '⌫' : key}
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
+            <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 16, marginTop: 16,
+                opacity: (isLocked || isVerifying) ? 0.5 : 1,
+                pointerEvents: (isLocked || isVerifying) ? 'none' : 'auto'
+            }}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                    <button key={num} onClick={() => handleKey(num.toString())}
+                        style={{
+                            width: 70, height: 70, borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.2)',
+                            color: '#fff', fontSize: 28, fontWeight: 800, cursor: 'pointer',
+                        }}
+                    >{num}</button>
+                ))}
+                <div />
+                <button onClick={() => handleKey('0')}
+                    style={{
+                        width: 70, height: 70, borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.2)',
+                        color: '#fff', fontSize: 28, fontWeight: 800, cursor: 'pointer',
+                    }}
+                >0</button>
+                <button onClick={() => handleKey('DEL')}
+                    style={{
+                        width: 70, height: 70, borderRadius: '50%', background: 'transparent',
+                        border: 'none', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer',
+                    }}
+                >⌫</button>
+            </div>
 
-            {/* Loading state */}
-            {isVerifying && (
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 800, margin: 0 }}>Verificando...</p>
-            )}
-
-            {/* Cancel */}
             <button
                 onClick={onCancel}
                 style={{
-                    background: 'none', border: 'none',
-                    color: 'rgba(255,255,255,0.5)', fontWeight: 800,
-                    fontSize: 14, cursor: 'pointer', padding: '8px 16px',
-                    textDecoration: 'underline'
+                    marginTop: 32, padding: '12px 24px',
+                    background: 'transparent', border: '2px solid rgba(255,255,255,0.3)',
+                    color: '#fff', borderRadius: 12, fontWeight: 800, cursor: 'pointer',
                 }}
             >
-                ← Trocar de herói
+                Cancelar
             </button>
         </div>
     );
