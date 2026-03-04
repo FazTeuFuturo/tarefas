@@ -54,3 +54,12 @@ export function deriveHeroPassword(pin: string, inviteToken: string): string {
 export function deriveHeroEmail(profileId: string): string {
     return `hero_${profileId.replace(/-/g, '')}@noreply.familyquest.app`;
 }
+
+/**
+ * Derives the Supabase Auth password for a hero.
+ * Based ONLY on invite_token — does NOT change when PIN changes.
+ * This allows persistent signin independent of PIN resets.
+ */
+export function heroAuthPassword(inviteToken: string): string {
+    return `fq_hero_${inviteToken.replace(/-/g, '').slice(0, 20)}`;
+}

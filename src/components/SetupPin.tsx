@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { hashPin } from '../lib/pinUtils';
+import { hashPin, deriveHeroEmail, heroAuthPassword } from '../lib/pinUtils';
 
 interface SetupPinProps {
     hero: {
@@ -11,9 +11,9 @@ interface SetupPinProps {
         xp: number;
         invite_token: string;
         link_id: string;
-        temp_token: string; // the one-time URL token
+        temp_token: string;
     };
-    onSuccess: (hero: any) => void;
+    onSuccess: () => void; // just signals App.tsx that auth is done — no hero data needed
     onCancel: () => void;
 }
 
@@ -52,16 +52,13 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
         });
     };
 
-    // Auto-advance when 4 digits are chosen
     React.useEffect(() => {
         const joined = currentDigits.join('');
         if (joined.length !== 4) return;
 
         if (step === 'choose') {
-            // Move to confirm step
             setTimeout(() => setStep('confirm'), 150);
         } else {
-            // Compare PINs and save
             const firstPin = pin.join('');
             if (joined !== firstPin) {
                 setError('Os PINs não coincidem. Tente novamente.');
@@ -75,22 +72,51 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                 }, 700);
                 return;
             }
-            // Save PIN
+
             (async () => {
                 setSaving(true);
                 try {
+                    // 1. Hash the PIN and save it to DB via RPC
                     const pinHash = await hashPin(joined, hero.invite_token);
-                    const { data, error: rpcErr } = await supabase.rpc('set_hero_pin', {
+                    const { data: pinSaved, error: rpcErr } = await supabase.rpc('set_hero_pin', {
                         p_token: hero.temp_token,
                         p_link_id: hero.link_id,
                         p_pin_hash: pinHash,
                     });
-                    if (rpcErr || data === false) {
+                    if (rpcErr || pinSaved === false) {
                         setError('Erro ao salvar PIN. O link pode ter expirado.');
                         setSaving(false);
                         return;
                     }
-                    onSuccess(hero);
+
+                    // 2. Create or sign in to Supabase Auth with PIN-independent credentials
+                    const email = deriveHeroEmail(hero.id);
+                    const password = heroAuthPassword(hero.invite_token);
+
+                    let { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+                    if (signInError) {
+                        // Auth user doesn't exist yet — create it
+                        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+                        if (signUpError && !signUpError.message.includes('already registered')) {
+                            setError('Erro ao criar conta: ' + signUpError.message);
+                            setSaving(false);
+                            return;
+                        }
+                        // Now sign in
+                        const { error: signIn2Error } = await supabase.auth.signInWithPassword({ email, password });
+                        if (signIn2Error) {
+                            setError('Erro ao entrar: ' + signIn2Error.message);
+                            setSaving(false);
+                            return;
+                        }
+                    }
+
+                    // 3. Save permanent invite_token to localStorage for future visits
+                    localStorage.setItem('fq_saved_hero_token', hero.invite_token);
+
+                    // 4. Success — AuthContext will pick up the session and route to HeroDashboard
+                    onSuccess();
                 } catch (err: any) {
                     setError('Erro: ' + err.message);
                     setSaving(false);
@@ -108,8 +134,8 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             gap: 24, padding: '0 24px',
+            overflowY: 'auto',
         }}>
-            {/* Avatar + Nome */}
             <div style={{ textAlign: 'center' }}>
                 <div style={{
                     width: 90, height: 90,
@@ -128,14 +154,14 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                     )}
                 </div>
                 <h2 style={{ color: '#fff', margin: 0, fontSize: 22 }}>Olá, {hero.nome}!</h2>
-                <p style={{ color: 'rgba(255,255,255,0.5)', margin: '6px 0 0', fontSize: 14 }}>
+                <p style={{ color: 'rgba(255,255,255,0.6)', margin: '6px 0 0', fontSize: 14 }}>
                     {step === 'choose'
-                        ? 'Crie um PIN de 4 dígitos para entrar no app'
-                        : 'Repita o PIN para confirmar'}
+                        ? '🔐 Crie seu PIN secreto de 4 dígitos'
+                        : '🔁 Repita o PIN para confirmar'}
                 </p>
             </div>
 
-            {/* Step indicator */}
+            {/* Step dots */}
             <div style={{ display: 'flex', gap: 8 }}>
                 {['choose', 'confirm'].map((stepLabel) => (
                     <div key={stepLabel} style={{
@@ -146,8 +172,8 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                 ))}
             </div>
 
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 800, margin: 0 }}>
-                {step === 'choose' ? 'Escolha seu PIN' : 'Confirme seu PIN'}
+            <p style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 800, margin: 0, fontSize: 16 }}>
+                {step === 'choose' ? 'Digite seu novo PIN' : 'Confirme o PIN'}
             </p>
 
             {/* PIN Dots */}
@@ -163,24 +189,18 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                 ))}
             </div>
 
-            {/* Error */}
             {error && (
                 <div style={{
                     background: 'var(--color-danger)', color: '#fff',
                     fontWeight: 800, fontSize: 13, padding: '8px 16px',
-                    borderRadius: 8, border: '2px solid rgba(255,255,255,0.3)',
-                    textAlign: 'center', maxWidth: 280,
+                    borderRadius: 8, textAlign: 'center', maxWidth: 280,
                 }}>
                     {error}
                 </div>
             )}
 
-            {/* Numpad */}
-            {!saving && (
-                <div style={{
-                    display: 'grid', gridTemplateColumns: 'repeat(3, 72px)',
-                    gap: 12,
-                }}>
+            {!saving ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 72px)', gap: 12 }}>
                     {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'DEL'].map((key, i) => {
                         if (key === '') return <div key={i} />;
                         return (
@@ -189,15 +209,12 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                                 onClick={() => handleKey(key)}
                                 disabled={key !== 'DEL' && filledCount >= 4}
                                 style={{
-                                    width: 72, height: 72,
-                                    borderRadius: '50%',
+                                    width: 72, height: 72, borderRadius: '50%',
                                     border: '3px solid rgba(255,255,255,0.3)',
                                     background: 'rgba(255,255,255,0.1)',
                                     color: '#fff',
                                     fontSize: key === 'DEL' ? 18 : 26,
-                                    fontWeight: 800,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.1s',
+                                    fontWeight: 800, cursor: 'pointer', transition: 'all 0.1s',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}
                                 onMouseDown={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')}
@@ -208,23 +225,24 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                         );
                     })}
                 </div>
+            ) : (
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 800, margin: 0 }}>
+                    Entrando na aventura... ⚔️
+                </p>
             )}
 
-            {saving && (
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 800, margin: 0 }}>Salvando...</p>
+            {!saving && (
+                <button
+                    onClick={onCancel}
+                    style={{
+                        background: 'none', border: 'none',
+                        color: 'rgba(255,255,255,0.4)', fontWeight: 800,
+                        fontSize: 13, cursor: 'pointer', textDecoration: 'underline',
+                    }}
+                >
+                    ← Cancelar
+                </button>
             )}
-
-            <button
-                onClick={onCancel}
-                style={{
-                    background: 'none', border: 'none',
-                    color: 'rgba(255,255,255,0.5)', fontWeight: 800,
-                    fontSize: 14, cursor: 'pointer', padding: '8px 16px',
-                    textDecoration: 'underline',
-                }}
-            >
-                ← Cancelar
-            </button>
         </div>
     );
 };

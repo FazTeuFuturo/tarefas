@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { verifyPin } from '../lib/pinUtils';
+import { verifyPin, deriveHeroEmail, heroAuthPassword } from '../lib/pinUtils';
+import { supabase } from '../lib/supabase';
 
 interface HeroProfile {
     id: string;
@@ -13,7 +14,7 @@ interface HeroProfile {
 
 interface PinEntryProps {
     hero: HeroProfile;
-    onSuccess: (hero: HeroProfile) => void;
+    onSuccess: () => void; // Auth session created — caller just needs to re-render
     onCancel: () => void;
 }
 
@@ -24,11 +25,9 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
     const [shake, setShake] = useState(false);
     const [attempts, setAttempts] = useState(0);
 
-    // Maximum 5 attempts before lockout
     const MAX_ATTEMPTS = 5;
     const isLocked = attempts >= MAX_ATTEMPTS;
 
-    // Auto-verify when 4 digits are entered
     useEffect(() => {
         const pin = digits.join('');
         if (pin.length === 4) {
@@ -38,21 +37,21 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                     const ok = await verifyPin(pin, hero.invite_token, hero.pin_hash);
                     if (ok) {
                         setError('');
-                        onSuccess(hero);
+                        // Sign in to Supabase Auth so AuthContext loads full profile/clan
+                        const email = deriveHeroEmail(hero.id);
+                        const password = heroAuthPassword(hero.invite_token);
+                        await supabase.auth.signInWithPassword({ email, password });
+                        onSuccess();
                     } else {
                         const newAttempts = attempts + 1;
                         setAttempts(newAttempts);
                         if (newAttempts >= MAX_ATTEMPTS) {
-                            setError(`Muitas tentativas erradas. Peça ao Mestre para resetar.`);
+                            setError('Muitas tentativas erradas. Peça ao Mestre para resetar.');
                         } else {
                             setError(`PIN incorreto. ${MAX_ATTEMPTS - newAttempts} tentativa(s) restante(s).`);
                         }
-                        // Shake + clear after short delay
                         setShake(true);
-                        setTimeout(() => {
-                            setShake(false);
-                            setDigits(['', '', '', '']);
-                        }, 600);
+                        setTimeout(() => { setShake(false); setDigits(['', '', '', '']); }, 600);
                     }
                 } finally {
                     setIsVerifying(false);
