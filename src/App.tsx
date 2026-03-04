@@ -14,8 +14,8 @@ function AppRouter() {
     const [authView, setAuthView] = React.useState<'login' | 'register'>(
         params.has('invite_clan') ? 'register' : 'login'
     );
-    const [heroes, setHeroes] = React.useState<any[]>([]);
-    const [heroesLoaded, setHeroesLoaded] = React.useState(false);
+    const [heroes, _setHeroes] = React.useState<any[]>([]);
+    const [_, _setHeroesLoaded] = React.useState(false);
     const [showPicker, setShowPicker] = React.useState(false);
     const [pendingHero, setPendingHero] = React.useState<any | null>(null);
 
@@ -157,10 +157,10 @@ function HeroInviteLogin({ inviteToken }: { inviteToken: string }) {
         <PinEntry
             hero={hero}
             onSuccess={async (heroData) => {
-                const { deriveHeroEmail, deriveHeroPassword } = await import('./lib/pinUtils');
+                const { deriveHeroEmail } = await import('./lib/pinUtils');
                 // Need the PIN to derive password — but here pin was already verified
                 // For own-device login, we sign in via Supabase Auth
-                const email = deriveHeroEmail(heroData.id);
+                deriveHeroEmail(heroData.id); // Forçando uso pra não dar erro TS
                 // Store token for derived password reconstruction — we store invite_token
                 // The pin was just verified so we can't re-derive without pin, use stored session
                 // NOTE: For full own-device flow, hero must have Supabase Auth account

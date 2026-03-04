@@ -25,7 +25,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const { profile, signOut } = useAuth();
     const {
         managedQuests, myQuests, rewards, redemptions, leaderboard,
-        updateFCBalance, completeQuest, createTask, deleteTask, updateTask,
+        completeQuest, createTask, deleteTask, updateTask,
         approveQuest, rejectQuest, createTavernItem, deleteReward,
         startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile
     } = useAppData();
@@ -590,10 +590,9 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
             {/* PIN entry for same-device hero switch */}
             {pendingSwitch && (
                 <PinEntry
-                    isOpen={true}
-                    onClose={() => setPendingSwitch(null)}
+                    hero={pendingSwitch}
+                    onCancel={() => setPendingSwitch(null)}
                     onSuccess={() => onSwitchToHero?.(pendingSwitch)}
-                    heroName={pendingSwitch.nome}
                 />
             )}
 
@@ -609,8 +608,8 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                     await updateProfile(profile.id, {
                         nome: editMasterName,
                         data_nascimento: editMasterBirthDate || null,
-                        avatar: editMasterPhoto || null,
-                        foto_url: editMasterPhoto || null
+                        avatar: editMasterPhoto || undefined,
+                        foto_url: editMasterPhoto || undefined
                     });
                     setIsSavingMaster(false);
                     setIsEditMasterOpen(false);
