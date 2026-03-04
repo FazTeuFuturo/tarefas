@@ -194,7 +194,9 @@ function HeroInviteFlow({ inviteToken, onSuccess, onCancel }: HeroInviteFlowProp
             .then(({ data, error }) => {
                 if (error || !data) { setState('invalid'); return; }
                 setHero({ ...data, temp_token: inviteToken });
-                setState(data.pin_set ? 'enter_pin' : 'setup_pin');
+                // The invite link is always a setup event — always show SetupPin.
+                // If pin already exists, set_hero_pin will overwrite it (PIN reset via link).
+                setState('setup_pin');
             });
     }, [inviteToken]);
 

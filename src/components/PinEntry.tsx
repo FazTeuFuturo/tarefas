@@ -88,6 +88,8 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
 
     const filledCount = digits.filter(d => d !== '').length;
 
+    const isAvatarUrl = /^https?:\/\//.test(hero.avatar || '');
+
     return (
         <div style={{
             position: 'fixed', inset: 0, zIndex: 3000,
@@ -102,13 +104,17 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                     width: 90, height: 90,
                     border: '4px solid #fff',
                     borderRadius: '50%',
-                    fontSize: 50,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 12px',
                     background: 'var(--color-primary)',
-                    boxShadow: '4px 4px 0 rgba(255,255,255,0.2)'
+                    boxShadow: '4px 4px 0 rgba(255,255,255,0.2)',
+                    overflow: 'hidden',
                 }}>
-                    {hero.avatar}
+                    {isAvatarUrl ? (
+                        <img src={hero.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={hero.nome} />
+                    ) : (
+                        <span style={{ fontSize: 50 }}>{hero.avatar || '🦸'}</span>
+                    )}
                 </div>
                 <h2 style={{ color: '#fff', margin: 0, fontSize: 22 }}>{hero.nome}</h2>
                 <p style={{ color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', fontSize: 13 }}>Nível {hero.nivel} · ⭐ {hero.xp} XP</p>
