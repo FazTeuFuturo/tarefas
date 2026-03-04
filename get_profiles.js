@@ -6,10 +6,10 @@ const client = new pg.Client({ connectionString });
 async function check() {
     await client.connect();
 
-    console.log("=== ALL PROFILES ===");
-    const all = await client.query("SELECT id, nome, avatar, role, invite_token, created_at, clan_id FROM profiles ORDER BY created_at DESC");
+    // Show ALL profiles
+    const all = await client.query("SELECT id, nome, avatar, role, invite_token, created_at, created_by, clan_id FROM profiles ORDER BY created_at");
     for (const r of all.rows) {
-        console.log(JSON.stringify(r));
+        console.log(`[${r.role}] "${r.nome}" | id: ${r.id} | token: ${r.invite_token} | clan: ${r.clan_id} | created: ${r.created_at}`);
     }
 
     await client.end();

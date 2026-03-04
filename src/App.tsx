@@ -19,6 +19,14 @@ function AppRouter() {
     const [showPicker, setShowPicker] = React.useState(false);
     const [pendingHero, setPendingHero] = React.useState<any | null>(null);
 
+    // Invite link: ?hero=<invite_token>
+    const heroInviteToken = React.useMemo(() => {
+        return new URLSearchParams(window.location.search).get('hero');
+    }, []);
+
+    // Hero session via invite link (cross-device): verified hero stored by PinEntry success
+    const [inviteHero, setInviteHero] = React.useState<any | null>(null);
+
     // Loading
     if (isLoading) {
         return (
@@ -31,17 +39,46 @@ function AppRouter() {
         );
     }
 
+    // ─── INVITE LINK FLOW (cross-device) ────────────────────────────────────────
+    // If there's a ?hero= token and we're not yet logged in via Supabase
+    if (!user && heroInviteToken && !inviteHero) {
+        return (
+            <HeroInviteLogin
+                inviteToken={heroInviteToken}
+                onSuccess={(hero) => {
+                    // Clean the URL without reloading
+                    window.history.replaceState({}, '', '/');
+                    setInviteHero(hero);
+                }}
+            />
+        );
+    }
+
+    // Hero logged in via invite link — show HeroDashboard directly with exit button
+    if (!user && inviteHero) {
+        return (
+            <HeroDashboard
+                heroOverride={inviteHero}
+                heroExitButton={
+                    <button
+                        onClick={() => {
+                            setInviteHero(null);
+                            window.location.href = '/';
+                        }}
+                        style={{
+                            background: 'none', border: '2px solid #000',
+                            borderRadius: 6, padding: '4px 10px',
+                            fontWeight: 800, fontSize: 12, cursor: 'pointer'
+                        }}
+                        title="Sair"
+                    >↩ Sair</button>
+                }
+            />
+        );
+    }
+
     // NOT logged in via Supabase
     if (!user || !profile) {
-        // Check URL for hero invite token
-        const params = new URLSearchParams(window.location.search);
-        const heroToken = params.get('hero');
-        if (heroToken) {
-            // Invite link flow — fetch hero by token and show PIN entry
-            return <HeroInviteLogin inviteToken={heroToken} />;
-        }
-
-        // Show profile picker before login if heroes were loaded from a previous session
         if (showPicker && heroes.length > 0 && !pendingHero) {
             return (
                 <ProfilePicker
@@ -57,15 +94,12 @@ function AppRouter() {
                 <PinEntry
                     hero={pendingHero}
                     onSuccess={async (hero) => {
-                        // Login via Supabase Auth with derived credentials
                         const { deriveHeroEmail, deriveHeroPassword } = await import('./lib/pinUtils');
                         const email = deriveHeroEmail(hero.id);
-                        const password = deriveHeroPassword('', hero.invite_token); // PIN already verified
-                        // For own-device: sign in as the hero
+                        const password = deriveHeroPassword('', hero.invite_token);
                         const { error } = await supabase.auth.signInWithPassword({ email, password });
                         if (error) {
                             console.error('Hero login failed:', error);
-                            // Fallback: show dashboard without Supabase session (limited)
                         }
                         setPendingHero(null);
                         setShowPicker(false);
@@ -116,7 +150,7 @@ function AppRouter() {
 }
 
 /** Handles the ?hero=<token> invite link flow for own-device login */
-function HeroInviteLogin({ inviteToken }: { inviteToken: string }) {
+function HeroInviteLogin({ inviteToken, onSuccess }: { inviteToken: string; onSuccess: (hero: any) => void }) {
     const [hero, setHero] = React.useState<any | null>(null);
     const [loading, setLoading] = React.useState(true);
     const [notFound, setNotFound] = React.useState(false);
@@ -153,18 +187,9 @@ function HeroInviteLogin({ inviteToken }: { inviteToken: string }) {
     return (
         <PinEntry
             hero={hero}
-            onSuccess={async (heroData) => {
-                const { deriveHeroEmail } = await import('./lib/pinUtils');
-                // Need the PIN to derive password — but here pin was already verified
-                // For own-device login, we sign in via Supabase Auth
-                deriveHeroEmail(heroData.id); // Forçando uso pra não dar erro TS
-                // Store token for derived password reconstruction — we store invite_token
-                // The pin was just verified so we can't re-derive without pin, use stored session
-                // NOTE: For full own-device flow, hero must have Supabase Auth account
-                localStorage.setItem('fq_hero_session', JSON.stringify({ id: heroData.id, invite_token: heroData.invite_token }));
-                // Remove token from URL cleanly
-                window.history.replaceState({}, '', '/');
-                window.location.reload();
+            onSuccess={(heroData) => {
+                // No reload — just pass the verified hero up via callback
+                onSuccess(heroData);
             }}
             onCancel={() => { window.location.href = '/'; }}
         />
