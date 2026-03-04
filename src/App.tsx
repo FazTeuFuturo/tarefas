@@ -126,8 +126,10 @@ function AppRouter() {
             <HeroDashboard
                 heroExitButton={
                     <button onClick={exitHeroMode}
-                        style={{ background: 'none', border: '2px solid #000', borderRadius: 6, padding: '4px 10px', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
-                    >↩ Heróis</button>
+                        className="neo-button"
+                        title="Voltar para Mestre"
+                        style={{ padding: '8px', background: 'var(--color-danger)', color: 'white', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    ><span style={{ fontSize: 18, fontWeight: 900 }}>X</span></button>
                 }
             />
         );
@@ -142,12 +144,14 @@ function AppRouter() {
         <HeroDashboard
             heroExitButton={
                 <button
+                    className="neo-button"
+                    title="Sair"
                     onClick={async () => {
                         clearHeroToken();
                         await supabase.auth.signOut({ scope: 'local' });
                     }}
-                    style={{ background: 'none', border: '2px solid #000', borderRadius: 6, padding: '4px 10px', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
-                >↩ Sair</button>
+                    style={{ padding: '8px', background: 'var(--color-danger)', color: 'white', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                ><span style={{ fontSize: 18, fontWeight: 900 }}>X</span></button>
             }
         />
     );

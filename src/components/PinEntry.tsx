@@ -37,10 +37,23 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                     const ok = await verifyPin(pin, hero.invite_token, hero.pin_hash);
                     if (ok) {
                         setError('');
-                        // Sign in to Supabase Auth so AuthContext loads full profile/clan
                         const email = deriveHeroEmail(hero.id);
                         const password = heroAuthPassword(hero.invite_token);
-                        await supabase.auth.signInWithPassword({ email, password });
+
+                        // Try sign in first
+                        let { data: session, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+                        if (signInError || !session.session) {
+                            // Auth user doesn't exist yet — create it and sign in
+                            await supabase.auth.signUp({ email, password });
+                            const { data: session2, error: signIn2Error } = await supabase.auth.signInWithPassword({ email, password });
+                            if (signIn2Error || !session2.session) {
+                                setError('Erro ao iniciar sessão. Contacte o Mestre.');
+                                setDigits(['', '', '', '']);
+                                return;
+                            }
+                        }
+
                         onSuccess();
                     } else {
                         const newAttempts = attempts + 1;
