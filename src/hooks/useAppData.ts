@@ -363,5 +363,32 @@ export function useAppData() {
         }
     }, [profile, fetchAll]);
 
-    return { myQuests, managedQuests, rewards, redemptions, leaderboard, loading, completeQuest, approveQuest, rejectQuest, updateFCBalance, createTask, deleteTask, updateTask, createTavernItem, deleteReward, buyReward, useReward, startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile, refetch: fetchAll };
+    const giveBonus = useCallback(async (heroId: string, fc: number, xp: number) => {
+        if (!profile || profile.role !== 'parent') return false;
+        try {
+            // Fetch current values to increment
+            const { data: hero, error: fetchErr } = await supabase
+                .from('profiles')
+                .select('fc_balance, xp')
+                .eq('id', heroId)
+                .single();
+            if (fetchErr || !hero) throw new Error('Herói não encontrado.');
+
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    fc_balance: hero.fc_balance + fc,
+                    xp: hero.xp + xp,
+                })
+                .eq('id', heroId);
+            if (error) throw error;
+            await fetchAll();
+            return true;
+        } catch (err: any) {
+            console.error('giveBonus error:', err.message);
+            return false;
+        }
+    }, [profile, fetchAll]);
+
+    return { myQuests, managedQuests, rewards, redemptions, leaderboard, loading, completeQuest, approveQuest, rejectQuest, updateFCBalance, createTask, deleteTask, updateTask, createTavernItem, deleteReward, buyReward, useReward, startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile, giveBonus, refetch: fetchAll };
 }

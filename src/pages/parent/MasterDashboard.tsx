@@ -27,7 +27,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
         managedQuests, myQuests, rewards, redemptions, leaderboard,
         completeQuest, createTask, deleteTask, updateTask,
         approveQuest, rejectQuest, createTavernItem, deleteReward,
-        startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile
+        startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile, giveBonus
     } = useAppData();
 
     const [view, setView] = useState<MasterView>('home');
@@ -54,6 +54,25 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [rewardDesc, setRewardDesc] = useState('');
     const [rewardCost, setRewardCost] = useState(100);
     const [rewardIcon, setRewardIcon] = useState('🎁');
+
+    // Bonus
+    const [isBonusOpen, setIsBonusOpen] = useState(false);
+    const [bonusHeroId, setBonusHeroId] = useState('');
+    const [bonusFC, setBonusFC] = useState(50);
+    const [bonusXP, setBonusXP] = useState(0);
+    const [bonusSending, setBonusSending] = useState(false);
+
+    const handleGiveBonus = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!bonusHeroId) return;
+        setBonusSending(true);
+        const ok = await giveBonus(bonusHeroId, bonusFC, bonusXP);
+        setBonusSending(false);
+        if (ok) {
+            setIsBonusOpen(false);
+            setBonusFC(50); setBonusXP(0); setBonusHeroId('');
+        }
+    };
 
     const handleCreateReward = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -276,6 +295,57 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                     </div>
                                 )
                             }
+                        </div>
+
+                        {/* ─── Dar Bônus Avulso ─── */}
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: '#EFF6FF' }}>
+                            <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-2)' }}>
+                                <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>💰 Dar Bônus Avulso</h3>
+                                <button
+                                    className="neo-button"
+                                    style={{ fontSize: 12, padding: '4px 12px', background: isBonusOpen ? 'var(--color-danger)' : 'var(--color-primary)', color: isBonusOpen ? '#fff' : '#000' }}
+                                    onClick={() => setIsBonusOpen(v => !v)}
+                                >{isBonusOpen ? 'Cancelar' : '+ Dar Bônus'}</button>
+                            </div>
+
+                            {isBonusOpen ? (
+                                <form onSubmit={handleGiveBonus} className="flex-col gap-2">
+                                    <div>
+                                        <label className="neo-label">Herói</label>
+                                        <select
+                                            className="neo-input"
+                                            value={bonusHeroId}
+                                            onChange={e => setBonusHeroId(e.target.value)}
+                                            required
+                                        >
+                                            <option value="">Selecione um herói...</option>
+                                            {leaderboard.filter(p => p.role === 'child').map(h => (
+                                                <option key={h.id} value={h.id}>{h.nome}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <div style={{ flex: 1 }}>
+                                            <label className="neo-label">🪙 FC a creditar</label>
+                                            <input type="number" min={0} max={9999} className="neo-input" value={bonusFC} onChange={e => setBonusFC(Number(e.target.value))} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <label className="neo-label">⭐ XP a creditar</label>
+                                            <input type="number" min={0} max={9999} className="neo-input" value={bonusXP} onChange={e => setBonusXP(Number(e.target.value))} />
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="neo-button"
+                                        disabled={bonusSending || !bonusHeroId || (bonusFC === 0 && bonusXP === 0)}
+                                        style={{ background: 'var(--color-primary)' }}
+                                    >
+                                        {bonusSending ? 'Enviando...' : '🎉 Confirmar Bônus'}
+                                    </button>
+                                </form>
+                            ) : (
+                                <p style={{ margin: 0, opacity: 0.5, fontSize: 13 }}>Credite FC ou XP diretamente para um herói, sem precisar de uma missão.</p>
+                            )}
                         </div>
 
                         {/* Últimos resgates */}
