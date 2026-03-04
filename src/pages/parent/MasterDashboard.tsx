@@ -1,60 +1,54 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut } from 'lucide-react';
-import { Tavern } from '../../components/Tavern';
-import { StatusBar } from '../../components/StatusBar';
-
-// Placeholder for full logic hook
 import { useAppData } from '../../hooks/useAppData';
 import { QuestList } from '../../components/QuestList';
 import { RewardCard } from '../../components/RewardCard';
 import { MissionEditModal } from '../../components/MissionEditModal';
+import { MissionCreateModal } from '../../components/MissionCreateModal';
+import { HeroCreateModal } from '../../components/HeroCreateModal';
+import { PinEntry } from '../../components/PinEntry';
+import { StatusBar } from '../../components/StatusBar';
 import { Quest } from '../../components/QuestCard';
+import { Profile } from '../../contexts/AuthContext';
+import { Modal } from '../../components/Modal';
+import { uploadAvatar } from '../../lib/storageUtils';
+import { ImageCropperModal } from '../../components/ImageCropperModal';
+import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
 
-export default function MasterDashboard() {
+type MasterView = 'home' | 'missions' | 'tavern' | 'clan';
+
+interface MasterDashboardProps {
+    onSwitchToHero?: (hero: Profile) => void;
+}
+
+export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps) {
     const { profile, signOut } = useAuth();
-    const { managedQuests, myQuests, rewards, redemptions, leaderboard, updateFCBalance, completeQuest, createTask, deleteTask, updateTask, approveQuest, rejectQuest, createTavernItem, deleteReward, startQuestTimer, pauseQuestTimer, resetQuestTimer } = useAppData();
-    const [view, setView] = useState<'overview' | 'tasks' | 'tavern' | 'bonus' | 'hero' | 'validate'>('overview');
+    const {
+        managedQuests, myQuests, rewards, redemptions, leaderboard,
+        updateFCBalance, completeQuest, createTask, deleteTask, updateTask,
+        approveQuest, rejectQuest, createTavernItem, deleteReward,
+        startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile
+    } = useAppData();
 
-    // States for Mission Form
-    const [isCreatingTask, setIsCreatingTask] = useState(false);
-    const [taskTitle, setTaskTitle] = useState('');
-    const [taskDesc, setTaskDesc] = useState('');
-    const [taskXp, setTaskXp] = useState(100);
-    const [taskFc, setTaskFc] = useState(50);
-    const [taskDuration, setTaskDuration] = useState(10);
-    const [taskAssignee, setTaskAssignee] = useState<string>(''); // For later when list of dependents is added
-    const [taskIsRecurring, setTaskIsRecurring] = useState(false);
-
-    // States for Editing Task
+    const [view, setView] = useState<MasterView>('home');
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingQuest, setEditingQuest] = useState<Quest | null>(null);
     const [isEditingModalOpen, setIsEditingModalOpen] = useState(false);
+    const [filterMember, setFilterMember] = useState<string>('all');
+    const [isHeroCreateOpen, setIsHeroCreateOpen] = useState(false);
+    const [pendingSwitch, setPendingSwitch] = useState<any | null>(null);
+    const [heroToDelete, setHeroToDelete] = useState<any | null>(null);
 
-    const handleCreateTask = async (e: React.FormEvent) => {
-        e.preventDefault();
-        await createTask(taskTitle, taskDesc, Number(taskXp), Number(taskFc), taskAssignee || undefined, Number(taskDuration), taskIsRecurring);
-        setIsCreatingTask(false);
-        setTaskTitle('');
-        setTaskDesc('');
-        setTaskDuration(10);
-        setTaskIsRecurring(false);
-    };
+    const [isEditMasterOpen, setIsEditMasterOpen] = useState(false);
+    const [editMasterName, setEditMasterName] = useState('');
+    const [editMasterBirthDate, setEditMasterBirthDate] = useState('');
+    const [editMasterPhoto, setEditMasterPhoto] = useState('');
+    const [isSavingMaster, setIsSavingMaster] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [isCropperOpen, setIsCropperOpen] = useState(false);
+    const [tempImage, setTempImage] = useState<string | null>(null);
 
-    const handleEditQuest = (quest: Quest) => {
-        setEditingQuest(quest);
-        setIsEditingModalOpen(true);
-    };
-
-    const handleSaveUpdatedTask = async (taskId: string, updates: Partial<Quest>) => {
-        await updateTask(taskId, updates);
-        setIsEditingModalOpen(false);
-        setEditingQuest(null);
-    };
-
-    // Filter children for the assignee dropdown
-    const childProfiles = leaderboard.filter(p => p.role === 'child');
-
-    // States for Tavern Form
+    // Tavern form
     const [isCreatingReward, setIsCreatingReward] = useState(false);
     const [rewardTitle, setRewardTitle] = useState('');
     const [rewardDesc, setRewardDesc] = useState('');
@@ -65,329 +59,687 @@ export default function MasterDashboard() {
         e.preventDefault();
         await createTavernItem(rewardTitle, rewardDesc, Number(rewardCost), rewardIcon);
         setIsCreatingReward(false);
-        setRewardTitle('');
-        setRewardDesc('');
-        setRewardIcon('🎁');
+        setRewardTitle(''); setRewardDesc(''); setRewardIcon('🎁');
     };
 
-    // States for Bonus Form
-    // handleGrantBonus removido por não ser usado
+    const childProfiles = leaderboard.filter(p => p.role === 'child');
+    const pendingQuests = managedQuests.filter(q => q.status === 'pending');
+    const pendingCount = pendingQuests.length;
+
+    // All active quests (managed + own), filtered by selected member
+    const allActiveQuests = [...managedQuests, ...myQuests.filter(q => !managedQuests.find(mq => mq.id === q.id))]
+        .filter(q => q.status === 'active');
+    const filteredQuests = filterMember === 'all'
+        ? allActiveQuests
+        : filterMember === 'unassigned'
+            ? allActiveQuests.filter(q => !q.assignee_id)
+            : allActiveQuests.filter(q => q.assignee_id === filterMember);
+
+    if (!profile) return null;
 
     return (
         <div className="mobile-app-container">
-            <header className="flex items-center justify-between neo-box" style={{ padding: 'var(--space-3)', marginBottom: 'var(--space-2)', marginTop: 'var(--space-3)', background: 'var(--color-primary)', marginInline: 'var(--space-2)' }}>
-                <div className="flex-col">
-                    <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)', letterSpacing: '-0.5px' }}>Quartel General</h1>
-                    <p style={{ margin: 0, fontWeight: 800 }}>Mestre {profile?.nome}</p>
+            {/* HEADER */}
+            <header style={{
+                padding: 'var(--space-2) var(--space-2)',
+                paddingTop: 'var(--space-3)',
+                background: 'var(--color-primary)',
+                borderBottom: '3px solid #000',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+            }}>
+                <div>
+                    <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>⚔️ Quartel General</h1>
+                    <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)', opacity: 0.7 }}>
+                        Mestre {profile.nome}
+                    </p>
                 </div>
-                <button onClick={signOut} className="neo-button" style={{ padding: '8px', background: 'var(--color-danger)', color: 'white' }} aria-label="Sair">
-                    <LogOut size={20} />
+                <button
+                    onClick={signOut}
+                    className="neo-button"
+                    style={{
+                        padding: '8px',
+                        background: 'var(--color-danger)',
+                        color: 'white',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                    title="Sair"
+                >
+                    <span style={{ fontSize: 18, fontWeight: 900 }}>X</span>
                 </button>
             </header>
 
-            <div style={{ padding: '0 var(--space-2)' }}>
-                {view === 'overview' && (
-                    <div className="neo-box" style={{ padding: 'var(--space-4)', animation: 'slideIn 0.2s ease' }}>
-                        <h2>📊 Visão Geral do Clã</h2>
-                        <p style={{ opacity: 0.8, fontWeight: 600 }}>O painel de controle do Mestre. (Em breve: Gráficos de XP e aprovações pendentes).</p>
+            <div style={{ padding: '0 var(--space-2)', paddingBottom: 90 }}>
+
+                {/* ────── 🏠 INÍCIO ────── */}
+                {view === 'home' && (
+                    <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
+
+                        {/* Status */}
+                        <StatusBar level={profile.nivel} xp={profile.xp} xpMax={profile.nivel * 100 + 500} credits={profile.fc_balance} />
+
+                        {/* Validações pendentes */}
+                        {pendingCount > 0 ? (
+                            <div className="flex-col gap-2">
+                                <div className="flex items-center justify-between">
+                                    <h2 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>
+                                        🛡️ Validar Missões
+                                    </h2>
+                                    <span style={{
+                                        background: 'var(--color-danger)', color: '#fff',
+                                        fontWeight: 800, fontSize: 12, padding: '2px 10px',
+                                        borderRadius: 99, border: '2px solid #000'
+                                    }}>
+                                        {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+                                    </span>
+                                </div>
+
+                                {pendingQuests.map(q => {
+                                    const hero = leaderboard.find(p => p.id === q.assignee_id);
+                                    return (
+                                        <div key={q.id} className="neo-box" style={{ padding: 'var(--space-3)', borderLeft: '5px solid var(--color-danger)' }}>
+                                            {hero && (
+                                                <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
+                                                    <img src={hero.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero.nome}`}
+                                                        style={{ width: 26, height: 26, borderRadius: '50%', border: '2px solid #000' }} alt={hero.nome} />
+                                                    <span style={{ fontWeight: 800, fontSize: 12 }}>{hero.nome} concluiu:</span>
+                                                </div>
+                                            )}
+                                            <p style={{ margin: '0 0 8px', fontWeight: 800 }}>{q.titulo}</p>
+                                            <div className="flex gap-2" style={{ marginBottom: 10 }}>
+                                                <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--color-secondary)', padding: '2px 8px', border: '2px solid #000', borderRadius: 4 }}>⭐ {q.xp_reward} XP</span>
+                                                <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--color-primary)', padding: '2px 8px', border: '2px solid #000', borderRadius: 4 }}>🪙 {q.fc_reward} FC</span>
+                                            </div>
+                                            <button
+                                                className="neo-button w-full"
+                                                onClick={() => approveQuest(q.id)}
+                                                style={{ background: 'var(--color-success)', color: '#fff', padding: 'var(--space-2)', marginBottom: 6 }}
+                                            >
+                                                ✅ APROVAR
+                                            </button>
+                                            <button
+                                                onClick={() => rejectQuest(q.id)}
+                                                style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 13, color: 'var(--color-danger)', textDecoration: 'underline', padding: '4px 0' }}
+                                            >
+                                                ✕ Recusar
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="neo-box" style={{ padding: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 12, background: '#f0fdf4' }}>
+                                <span style={{ fontSize: 32 }}>✅</span>
+                                <div>
+                                    <p style={{ margin: 0, fontWeight: 800 }}>Tudo em dia!</p>
+                                    <p style={{ margin: 0, fontSize: 13, opacity: 0.6 }}>Nenhuma missão aguardando validação.</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {view === 'tasks' && (
-                    <div className="flex-col gap-4" style={{ animation: 'slideIn 0.2s ease', paddingBottom: 'var(--space-8)' }}>
-                        <div className="neo-box" style={{ padding: 'var(--space-4)' }}>
-                            <h2>⚙️ Missões Pendentes ({managedQuests.length})</h2>
-                            <p style={{ opacity: 0.8, fontWeight: 600 }}>Acompanhe e valide o trabalho dos heróis.</p>
-                            {managedQuests.length === 0 && <p style={{ marginTop: 'var(--space-3)' }}>Nenhuma missão ativa no momento.</p>}
-                            <div className="flex-col gap-3" style={{ marginTop: 'var(--space-3)' }}>
-                                <QuestList
-                                    quests={managedQuests.filter(q => q.status === 'active')}
-                                    onCompleteQuest={completeQuest}
-                                    onDeleteQuest={deleteTask}
-                                    onEditQuest={handleEditQuest}
-                                    isParent={true}
-                                    profiles={leaderboard}
-                                    onStartTimer={startQuestTimer}
-                                    onPauseTimer={pauseQuestTimer}
-                                    onResetTimer={resetQuestTimer}
-                                />
-                            </div>
+                {/* ────── 📋 MISSÕES ────── */}
+                {view === 'missions' && (
+                    <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease', paddingBottom: 80 }}>
+                        <div className="flex items-center justify-between">
+                            <h2 style={{ margin: 0 }}>📋 Missões do Clã</h2>
+                            <span style={{ fontWeight: 800, fontSize: 12, opacity: 0.6 }}>{allActiveQuests.length} ativas</span>
                         </div>
 
-                        {/* Validar Missões Section */}
-                        <div className="neo-box" style={{ padding: 'var(--space-4)', borderLeft: '6px solid var(--color-warning)' }}>
-                            <h2>🛡️ Validar Missões ({managedQuests.filter(q => q.status === 'pending').length})</h2>
-                            <p style={{ opacity: 0.8, fontWeight: 600 }}>Aprove ou recuse os trabalhos concluídos.</p>
+                        {/* Filtro por membro */}
+                        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                            {[{ id: 'all', nome: 'Todos' }, ...leaderboard].map(m => (
+                                <button
+                                    key={m.id}
+                                    onClick={() => setFilterMember(m.id)}
+                                    style={{
+                                        flexShrink: 0,
+                                        padding: '6px 14px', fontWeight: 800, fontSize: 13,
+                                        border: '2px solid #000', borderRadius: 99, cursor: 'pointer',
+                                        background: filterMember === m.id ? '#000' : '#fff',
+                                        color: filterMember === m.id ? '#fff' : '#000',
+                                        transition: 'all 0.1s'
+                                    }}
+                                >
+                                    {m.nome}
+                                </button>
+                            ))}
+                        </div>
 
-                            <div className="flex-col gap-3" style={{ marginTop: 'var(--space-3)' }}>
-                                {managedQuests.filter(q => q.status === 'pending').length === 0 ? (
-                                    <p style={{ opacity: 0.5 }}>Nenhuma missão aguardando validação.</p>
-                                ) : (
-                                    managedQuests.filter(q => q.status === 'pending').map(q => (
-                                        <div key={q.id} className="neo-box" style={{ padding: 'var(--space-3)', background: 'white' }}>
-                                            <div className="flex justify-between items-center">
-                                                <div>
-                                                    <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>{q.titulo}</h3>
-                                                    <div className="flex gap-2" style={{ marginTop: 4 }}>
-                                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--color-secondary)' }}>⭐ {q.xp_reward} XP</span>
-                                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--color-primary)' }}>🪙 {q.fc_reward} FC</span>
-                                                        <span style={{ fontSize: '10px', fontWeight: 800 }}>👤 {leaderboard.find(p => p.id === q.assignee_id)?.nome || 'Todos'}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        className="neo-button"
-                                                        onClick={() => rejectQuest(q.id)}
-                                                        style={{ background: 'var(--color-danger)', color: 'white', padding: '6px 10px', fontSize: 12 }}
-                                                        title="Recusar"
-                                                    >
-                                                        ❌
-                                                    </button>
-                                                    <button
-                                                        className="neo-button"
-                                                        onClick={() => approveQuest(q.id)}
-                                                        style={{ background: 'var(--color-success)', color: 'white', padding: '6px 12px', fontSize: 12, fontWeight: 800 }}
-                                                    >
-                                                        APROVAR
-                                                    </button>
-                                                </div>
+                        {filteredQuests.length === 0 ? (
+                            <div className="neo-box" style={{ padding: 'var(--space-4)', textAlign: 'center', opacity: 0.5 }}>
+                                <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}>😴</span>
+                                <p style={{ margin: 0, fontWeight: 800 }}>Nenhuma missão ativa.</p>
+                            </div>
+                        ) : (
+                            <QuestList
+                                quests={filteredQuests}
+                                onCompleteQuest={completeQuest}
+                                onDeleteQuest={deleteTask}
+                                onEditQuest={(q) => { setEditingQuest(q); setIsEditingModalOpen(true); }}
+                                isParent={true}
+                                profiles={leaderboard}
+                                onStartTimer={startQuestTimer}
+                                onPauseTimer={pauseQuestTimer}
+                                onResetTimer={resetQuestTimer}
+                            />
+                        )}
+                    </div>
+                )}
+
+                {/* ────── 🍺 TAVERNA ────── */}
+                {view === 'tavern' && (
+                    <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
+                        <h2 style={{ margin: 0 }}>🍺 Gerenciar Taverna</h2>
+
+                        {/* Criar prêmio */}
+                        <div className="neo-box" style={{ padding: 'var(--space-3)' }}>
+                            {!isCreatingReward ? (
+                                <button className="neo-button w-full" style={{ background: 'var(--color-secondary)' }} onClick={() => setIsCreatingReward(true)}>
+                                    + NOVO PRÊMIO
+                                </button>
+                            ) : (
+                                <form onSubmit={handleCreateReward} className="flex-col gap-2">
+                                    <h3 style={{ margin: '0 0 var(--space-1)' }}>🎁 Novo Prêmio</h3>
+                                    <input type="text" className="neo-input" placeholder="Nome do prêmio" value={rewardTitle} onChange={e => setRewardTitle(e.target.value)} required />
+                                    <textarea className="neo-input" rows={2} placeholder="Descrição (opcional)..." value={rewardDesc} onChange={e => setRewardDesc(e.target.value)} />
+                                    <div className="flex gap-2">
+                                        <div style={{ flex: 1 }}>
+                                            <label className="neo-label">Custo (FC)</label>
+                                            <input type="number" className="neo-input" min={1} value={rewardCost} onChange={e => setRewardCost(Number(e.target.value))} required />
+                                        </div>
+                                        <div style={{ width: 70 }}>
+                                            <label className="neo-label">Emoji</label>
+                                            <input type="text" className="neo-input" style={{ textAlign: 'center' }} placeholder="🎁" value={rewardIcon} onChange={e => setRewardIcon(e.target.value)} maxLength={2} />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button type="submit" className="neo-button" style={{ flex: 2, background: 'var(--color-primary)' }}>SALVAR</button>
+                                        <button type="button" className="neo-button" style={{ flex: 1, background: 'var(--color-danger)', color: '#fff' }} onClick={() => setIsCreatingReward(false)}>X</button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+
+                        {/* Lista de prêmios */}
+                        <div className="neo-box" style={{ padding: 'var(--space-3)' }}>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🏺 Itens ({rewards.length})</h3>
+                            {rewards.length === 0
+                                ? <p style={{ margin: 0, opacity: 0.5 }}>Nenhum item cadastrado.</p>
+                                : (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-2)' }}>
+                                        {rewards.map(r => <RewardCard key={r.id} reward={r} showDelete onDelete={deleteReward} />)}
+                                    </div>
+                                )
+                            }
+                        </div>
+
+                        {/* Últimos resgates */}
+                        {redemptions.length > 0 && (
+                            <div className="neo-box" style={{ padding: 'var(--space-3)', background: '#FEF3C7' }}>
+                                <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🛒 Últimos Resgates</h3>
+                                {redemptions.slice(0, 8).map(r => (
+                                    <div key={r.id} className="flex justify-between items-center" style={{ padding: '6px 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+                                        <span style={{ fontSize: 13 }}>
+                                            <strong>{r.profiles?.nome}</strong>
+                                            <span style={{ opacity: 0.5, margin: '0 6px' }}>→</span>
+                                            {r.rewards?.titulo}
+                                        </span>
+                                        <span style={{ fontWeight: 800, color: 'var(--color-danger)', fontSize: 13 }}>-{r.cost_fc}FC</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ────── 🏆 CLÃ ────── */}
+                {view === 'clan' && (
+                    <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
+                        <div className="flex items-center justify-between">
+                            <h2 style={{ margin: 0 }}>🏆 Clã</h2>
+                            <span style={{ fontWeight: 800, fontSize: 12, opacity: 0.6 }}>{leaderboard.length} Membros</span>
+                        </div>
+
+                        {/* Ranking da Família */}
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-primary)' }}>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                🎖️ Ranking da Família
+                            </h3>
+                            <div className="flex-col gap-2">
+                                {leaderboard.map((member, idx) => (
+                                    <div key={member.id} className="neo-box flex items-center gap-3"
+                                        style={{ padding: 'var(--space-2)', background: '#fff' }}>
+                                        <span style={{ fontWeight: 800, fontSize: idx === 0 ? 26 : 20, width: 34, textAlign: 'center', flexShrink: 0 }}>
+                                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                                        </span>
+                                        <img
+                                            src={/^https?:\/\//.test(member.avatar || '') ? member.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.nome}`}
+                                            style={{ width: 38, height: 38, borderRadius: '50%', border: '3px solid #000', flexShrink: 0, objectFit: 'cover' }}
+                                            alt={member.nome}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.nome}`; }}
+                                        />
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div className="flex items-center gap-2">
+                                                <strong style={{ fontSize: 13 }}>{member.nome}</strong>
+                                                {member.id === profile.id && (
+                                                    <span style={{
+                                                        fontSize: 9,
+                                                        fontWeight: 900,
+                                                        background: '#000',
+                                                        color: '#fff',
+                                                        padding: '1px 5px',
+                                                        borderRadius: 3,
+                                                        letterSpacing: '0.5px'
+                                                    }}>VOCÊ</span>
+                                                )}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
+                                                <span style={{ fontSize: 11, fontWeight: 700 }}>Nv {member.nivel}</span>
+                                                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-tertiary)' }}>⭐ {member.xp} XP</span>
+                                                <span style={{ fontSize: 11, fontWeight: 700 }}>🪙 {member.fc_balance} FC</span>
+                                            </div>
+                                            {/* XP progress bar */}
+                                            <div style={{ marginTop: 4, height: 5, background: 'rgba(0,0,0,0.1)', borderRadius: 3, border: '1px solid rgba(0,0,0,0.15)', overflow: 'hidden' }}>
+                                                <div style={{ height: '100%', background: 'var(--color-tertiary)', width: `${Math.min(100, (member.xp / (member.nivel * 100 + 500)) * 100)}%`, borderRadius: 3 }} />
                                             </div>
                                         </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-                        {/* CREATE TASK FORM */}
-                        <div className="neo-box" style={{ padding: 'var(--space-4)', background: 'var(--color-secondary)' }}>
-                            <h2 style={{ marginBottom: 'var(--space-3)' }}>✨ Nova Missão</h2>
-
-                            {!isCreatingTask ? (
-                                <button className="neo-button w-full" style={{ padding: 'var(--space-3)', background: 'var(--color-surface)' }} onClick={() => setIsCreatingTask(true)}>
-                                    <span style={{ fontSize: 'var(--font-size-xl)' }}>+</span> CRIAR MISSÃO
-                                </button>
-                            ) : (
-                                <form onSubmit={handleCreateTask} className="flex-col gap-3">
-                                    <div className="flex-col gap-1">
-                                        <label className="neo-label">Título da Tarefa</label>
-                                        <input type="text" className="neo-input" placeholder="Ex: Arrumar a Cama" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} required />
                                     </div>
-                                    <div className="flex-col gap-1">
-                                        <label className="neo-label">Descrição (Opcional)</label>
-                                        <textarea className="neo-input" placeholder="Detalhes do que deve ser feito..." value={taskDesc} onChange={e => setTaskDesc(e.target.value)} rows={2} />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="flex-col gap-1" style={{ flex: 1 }}>
-                                            <label className="neo-label">Duração (Min)</label>
-                                            <input type="number" className="neo-input" value={taskDuration} onChange={e => setTaskDuration(Number(e.target.value))} min={1} required />
-                                        </div>
-                                        <div className="flex-col gap-1">
-                                            <label className="neo-label">Atribuir a</label>
-                                            <select className="neo-input" value={taskAssignee} onChange={e => setTaskAssignee(e.target.value)}>
-                                                <option value="">Qualquer Herói</option>
-                                                <option value={profile?.id}>A mim mesmo ({profile?.nome})</option>
-                                                {childProfiles.map(child => (
-                                                    <option key={child.id} value={child.id}>{child.nome}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="flex-col gap-1" style={{ flex: 1 }}>
-                                            <label className="neo-label">Recompensa (XP)</label>
-                                            <input type="number" className="neo-input" value={taskXp} onChange={e => setTaskXp(Number(e.target.value))} min={10} required />
-                                        </div>
-                                        <div className="flex-col gap-1" style={{ flex: 1 }}>
-                                            <label className="neo-label">Moedas (FC)</label>
-                                            <input type="number" className="neo-input" value={taskFc} onChange={e => setTaskFc(Number(e.target.value))} min={0} required />
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2" style={{ marginTop: '4px', cursor: 'pointer' }} onClick={() => setTaskIsRecurring(!taskIsRecurring)}>
-                                        <div className="neo-box" style={{
-                                            width: 20, height: 20,
-                                            background: taskIsRecurring ? 'var(--color-primary)' : 'white',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            padding: 0, cursor: 'pointer'
-                                        }}>
-                                            {taskIsRecurring && <span style={{ color: 'white', fontSize: 14 }}>✓</span>}
-                                        </div>
-                                        <label className="neo-label" style={{ margin: 0, cursor: 'pointer' }}>Missão Recorrente (Diária)</label>
-                                    </div>
-                                    <div className="flex gap-2" style={{ marginTop: 'var(--space-2)' }}>
-                                        <button type="submit" className="neo-button" style={{ flex: 2, background: 'var(--color-primary)' }}>SALVAR</button>
-                                        <button type="button" className="neo-button" style={{ flex: 1, background: 'var(--color-danger)', color: 'white' }} onClick={() => setIsCreatingTask(false)}>X</button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {view === 'tavern' && (
-                    <div className="flex-col gap-4" style={{ animation: 'slideIn 0.2s ease', paddingBottom: 'var(--space-8)' }}>
-                        <div className="neo-box" style={{ padding: 'var(--space-4)', background: 'var(--color-primary)' }}>
-                            <h2 style={{ color: 'white' }}>🍻 Gerenciar Taverna</h2>
-                            <p style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>Crie recompensas para os heróis comprarem com as moedas que ganharam nas missões.</p>
-                        </div>
-
-                        {/* CREATE REWARD FORM */}
-                        <div className="neo-box" style={{ padding: 'var(--space-4)', background: 'var(--color-surface)' }}>
-                            <h2 style={{ marginBottom: 'var(--space-3)' }}>🎁 Novo Prêmio</h2>
-
-                            {!isCreatingReward ? (
-                                <button className="neo-button w-full" style={{ padding: 'var(--space-3)', background: 'var(--color-secondary)' }} onClick={() => setIsCreatingReward(true)}>
-                                    <span style={{ fontSize: 'var(--font-size-xl)' }}>+</span> CADASTRAR PRÊMIO
-                                </button>
-                            ) : (
-                                <form onSubmit={handleCreateReward} className="flex-col gap-3">
-                                    <div className="flex-col gap-1">
-                                        <label className="neo-label">Nome do Prêmio</label>
-                                        <input type="text" className="neo-input" placeholder="Ex: 1 hora de Videogame" value={rewardTitle} onChange={e => setRewardTitle(e.target.value)} required />
-                                    </div>
-                                    <div className="flex-col gap-1">
-                                        <label className="neo-label">Descrição (Opcional)</label>
-                                        <textarea className="neo-input" placeholder="Detalhes do prêmio..." value={rewardDesc} onChange={e => setRewardDesc(e.target.value)} rows={2} />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="flex-col gap-1" style={{ flex: 1 }}>
-                                            <label className="neo-label">Custo (FC)</label>
-                                            <input type="number" className="neo-input" value={rewardCost} onChange={e => setRewardCost(Number(e.target.value))} min={1} required />
-                                        </div>
-                                        <div className="flex-col gap-1" style={{ width: '80px' }}>
-                                            <label className="neo-label">Emoji</label>
-                                            <input type="text" className="neo-input" value={rewardIcon} onChange={e => setRewardIcon(e.target.value)} maxLength={2} style={{ textAlign: 'center' }} required />
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2" style={{ marginTop: 'var(--space-2)' }}>
-                                        <button type="submit" className="neo-button" style={{ flex: 2, background: 'var(--color-primary)' }}>SALVAR</button>
-                                        <button type="button" className="neo-button" style={{ flex: 1, background: 'var(--color-danger)', color: 'white' }} onClick={() => setIsCreatingReward(false)}>X</button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
-
-                        {/* LIST REWARDS TO MANAGE */}
-                        <div className="neo-box" style={{ padding: 'var(--space-4)', background: 'var(--color-surface)' }}>
-                            <h2 style={{ marginBottom: 'var(--space-3)' }}>🏺 Itens da Taverna ({rewards.length})</h2>
-                            {rewards.length === 0 && <p style={{ opacity: 0.7 }}>Nenhum item cadastrado ainda.</p>}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 'var(--space-3)' }}>
-                                {rewards.map(reward => (
-                                    <RewardCard
-                                        key={reward.id}
-                                        reward={reward}
-                                        showDelete={true}
-                                        onDelete={deleteReward}
-                                    />
                                 ))}
                             </div>
                         </div>
 
-                        {/* RECENT REDEMPTIONS */}
-                        <div className="neo-box" style={{ padding: 'var(--space-4)', background: '#FEF3C7' }}>
-                            <h2 style={{ marginBottom: 'var(--space-2)' }}>🛒 Últimos Resgates</h2>
-                            <p style={{ fontSize: 'var(--font-size-sm)', opacity: 0.8, marginBottom: 'var(--space-3)' }}>Veja quem resgatou o quê recentemente na taverna.</p>
-                            <div className="flex-col gap-2">
-                                {redemptions.length === 0 ? (
-                                    <p style={{ opacity: 0.5, fontStyle: 'italic' }}>Nenhum resgate registrado.</p>
-                                ) : (
-                                    redemptions.map(r => (
-                                        <div key={r.id} className="flex justify-between items-center" style={{ padding: '8px', borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
-                                            <div>
-                                                <strong style={{ color: 'var(--color-tertiary)' }}>{r.profiles?.nome}</strong>
-                                                <span style={{ margin: '0 8px', opacity: 0.5 }}>comprou</span>
-                                                <strong>{r.rewards?.titulo}</strong>
-                                            </div>
-                                            <span style={{ fontWeight: 800, color: 'var(--color-primary)' }}>-{r.cost_fc} FC</span>
+                        {/* Heróis — grid de cards */}
+                        <div>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>⚔️ Heróis do Clã</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+
+                                {/* Cards dos heróis existentes */}
+                                {leaderboard.filter(m => m.role === 'child').map(hero => (
+                                    <div key={hero.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, background: '#fff' }}>
+                                        {/* Botão Remover Herói */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setHeroToDelete(hero);
+                                            }}
+                                            className="neo-button"
+                                            style={{
+                                                position: 'absolute',
+                                                top: -12,
+                                                right: -12,
+                                                width: '32px',
+                                                height: '32px',
+                                                borderRadius: '50%',
+                                                background: 'var(--color-danger)',
+                                                color: 'white',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontSize: '14px',
+                                                zIndex: 10,
+                                                padding: 0,
+                                                cursor: 'pointer'
+                                            }}
+                                            title="Remover Herói"
+                                        >
+                                            ✕
+                                        </button>
+                                        <img
+                                            src={/^https?:\/\//.test(hero.avatar || '') ? hero.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero.nome}`}
+                                            style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #000', margin: '0 auto', display: 'block', objectFit: 'cover' }}
+                                            alt={hero.nome}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero.nome}`; }}
+                                        />
+                                        <div>
+                                            <strong style={{ fontSize: 13, display: 'block' }}>{hero.nome}</strong>
+                                            <span style={{ fontSize: 11, opacity: 0.8 }}>
+                                                Nv {hero.nivel} · <span style={{ fontWeight: 700, color: 'var(--color-tertiary-dark)' }}>💰 {hero.fc_balance} FC</span>
+                                            </span>
                                         </div>
-                                    ))
-                                )}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                            {onSwitchToHero && (
+                                                <button
+                                                    className="neo-button"
+                                                    style={{ width: '100%', background: 'var(--color-primary)', fontSize: 12, padding: '5px 0' }}
+                                                    onClick={() => setPendingSwitch(hero)}
+                                                >▶ Jogar</button>
+                                            )}
+                                            <button
+                                                className="neo-button"
+                                                style={{ width: '100%', background: '#f5f5f5', fontSize: 12, padding: '5px 0' }}
+                                                onClick={() => {
+                                                    const link = `${window.location.origin}?hero=${hero.invite_token || ''}`;
+                                                    navigator.clipboard.writeText(link)
+                                                        .then(() => alert(`✅ Link copiado!\n\n${link}`))
+                                                        .catch(() => alert(link));
+                                                }}
+                                            >🔗 Compartilhar</button>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Card de adicionar novo herói */}
+                                <button
+                                    onClick={() => setIsHeroCreateOpen(true)}
+                                    style={{
+                                        border: '3px dashed #bbb',
+                                        borderRadius: 12, background: 'transparent',
+                                        cursor: 'pointer', padding: 'var(--space-3)',
+                                        display: 'flex', flexDirection: 'column',
+                                        alignItems: 'center', justifyContent: 'center',
+                                        gap: 8, minHeight: 160,
+                                        transition: 'border-color 0.15s, background 0.15s',
+                                        color: '#888',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.background = '#f9f9f9'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#bbb'; e.currentTarget.style.background = 'transparent'; }}
+                                >
+                                    <span style={{ fontSize: 32, display: 'block' }}>＋</span>
+                                    <span style={{ fontSize: 13, fontWeight: 800 }}>Novo Herói</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Seção de Mestres / Co-parentalidade */}
+                        <div style={{ marginTop: 'var(--space-2)' }}>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🧙‍♂️ Mestres</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                                {/* Perfil do Mestre Atual */}
+                                {leaderboard.filter(m => m.role === 'parent').map(master => (
+                                    <div key={master.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', opacity: 0.9, textAlign: 'center', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                        {master.id === profile.id && (
+                                            <button
+                                                onClick={() => {
+                                                    setEditMasterName(master.nome);
+                                                    setEditMasterBirthDate(master.data_nascimento || '');
+                                                    setEditMasterPhoto(master.foto_url || master.avatar || '');
+                                                    setIsEditMasterOpen(true);
+                                                }}
+                                                style={{
+                                                    position: 'absolute', top: 5, right: 5,
+                                                    background: 'none', border: 'none', cursor: 'pointer',
+                                                    fontSize: 16, padding: 4, opacity: 0.6
+                                                }}
+                                            >
+                                                ✏️
+                                            </button>
+                                        )}
+                                        <img
+                                            src={/^https?:\/\//.test(master.avatar || '') ? master.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${master.nome}`}
+                                            style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid #000', margin: '0 auto 8px', display: 'block', objectFit: 'cover' }}
+                                            alt={master.nome}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${master.nome}`; }}
+                                        />
+                                        <p style={{ margin: '0', fontWeight: 800, fontSize: 13, lineHeight: 1.2 }}>{master.nome}</p>
+                                        <p style={{ margin: 0, fontSize: 11, opacity: 0.6 }}>Mestre</p>
+                                    </div>
+                                ))}
+
+                                {/* Botão de Convidar Mestre */}
+                                <button
+                                    onClick={() => {
+                                        const link = `${window.location.origin}/?invite_clan=${profile.clan_id}`;
+                                        navigator.clipboard.writeText(link)
+                                            .then(() => alert(`✅ Link de Convite Copiado!\n\nEnvie para o outro Mestre (Pai/Mãe) se cadastrar no seu clã.\n\n${link}`))
+                                            .catch(() => alert(link));
+                                    }}
+                                    style={{
+                                        border: '3px dashed var(--color-primary)',
+                                        borderRadius: 12, background: 'transparent',
+                                        cursor: 'pointer', padding: 'var(--space-3)',
+                                        display: 'flex', flexDirection: 'column',
+                                        alignItems: 'center', justifyContent: 'center',
+                                        gap: 6, transition: 'all 0.2s',
+                                        minHeight: 120
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.borderColor = '#000'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+                                >
+                                    <span style={{ fontSize: 24, display: 'block' }}>🤝</span>
+                                    <span style={{ fontSize: 11, fontWeight: 800 }}>Convidar Mestre</span>
+                                </button>
                             </div>
                         </div>
                     </div>
-                )}
 
-                {view === 'bonus' && (
-                    <div className="neo-box" style={{ background: 'var(--color-secondary)', padding: 'var(--space-4)', animation: 'slideIn 0.2s ease' }}>
-                        <h2>🎁 Conceder Bônus</h2>
-                        <p style={{ fontWeight: 800 }}>Recompense ou deduza Family Coins diretamente, sem precisar de uma missão.</p>
-                    </div>
-                )}
-
-                {view === 'hero' && profile && (
-                    <div style={{ animation: 'slideIn 0.2s ease' }}>
-                        <div style={{ marginBottom: 'var(--space-4)' }}>
-                            <StatusBar level={profile.nivel} xp={profile.xp} xpMax={profile.nivel * 100 + 500} credits={profile.fc_balance} />
-                        </div>
-
-                        <div className="neo-box" style={{ padding: 'var(--space-4)' }}>
-                            <h2>Minhas Missões ({myQuests.length})</h2>
-                            <p style={{ opacity: 0.8, fontWeight: 600 }}>Cumpra suas próprias metas impostas a você mesmo.</p>
-                        </div>
-
-                        <div style={{ marginTop: 'var(--space-4)' }}>
-                            <QuestList
-                                quests={myQuests}
-                                onCompleteQuest={completeQuest}
-                                profiles={leaderboard}
-                            />
-                        </div>
-
-                        <div style={{ marginTop: 'var(--space-4)' }}>
-                            <Tavern fcBalance={profile.fc_balance} onPurchase={updateFCBalance} />
-                        </div>
-                    </div>
                 )}
             </div>
 
-            {/* Bottom Navigation */}
+            {/* ────── BOTTOM NAV ────── */}
             <nav className="bottom-nav">
-                <button className={`nav-item ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}>
-                    <span style={{ fontSize: '1.5rem', marginBottom: '4px' }}>🏠</span>
-                    Visão Geral
-                </button>
-                <button className={`nav-item ${view === 'tasks' ? 'active' : ''}`} onClick={() => setView('tasks')} style={{ position: 'relative' }}>
-                    <span style={{ fontSize: '1.5rem', marginBottom: '4px' }}>📋</span>
-                    Missões
-                    {managedQuests.filter(q => q.status === 'pending').length > 0 && (
+                <button className={`nav-item ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')} style={{ position: 'relative' }}>
+                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>🏠</span>
+                    Início
+                    {pendingCount > 0 && (
                         <span style={{
-                            position: 'absolute', top: 5, right: '20%',
-                            background: 'var(--color-danger)', color: 'white',
-                            borderRadius: '50%', width: 18, height: 18,
-                            fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            border: '2px solid white', fontWeight: 800
-                        }}>
-                            {managedQuests.filter(q => q.status === 'pending').length}
-                        </span>
+                            position: 'absolute', top: 6, right: '18%',
+                            background: 'var(--color-danger)', color: '#fff',
+                            borderRadius: '50%', width: 17, height: 17,
+                            fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: '2px solid #fff', fontWeight: 800
+                        }}>{pendingCount}</span>
                     )}
                 </button>
+                <button className={`nav-item ${view === 'missions' ? 'active' : ''}`} onClick={() => setView('missions')}>
+                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>📋</span>
+                    Missões
+                </button>
                 <button className={`nav-item ${view === 'tavern' ? 'active' : ''}`} onClick={() => setView('tavern')}>
-                    <span style={{ fontSize: '1.5rem', marginBottom: '4px' }}>🍺</span>
+                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>🍺</span>
                     Taverna
                 </button>
-                <button className={`nav-item ${view === 'hero' ? 'active' : ''}`} onClick={() => setView('hero')} style={{ background: view === 'hero' ? 'var(--color-secondary)' : 'var(--color-bg)', border: 'var(--border-width) solid var(--color-border)' }}>
-                    <span style={{ fontSize: '1.5rem', marginBottom: '4px' }}>🎮</span>
-                    JOGAR
+                <button className={`nav-item ${view === 'clan' ? 'active' : ''}`} onClick={() => setView('clan')}>
+                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>🏆</span>
+                    Clã
                 </button>
             </nav>
-            {/* MISSION EDIT MODAL */}
+
+            {/* FAB — Nova Missão */}
+            {view === 'missions' && (
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    style={{
+                        position: 'fixed',
+                        bottom: 86,
+                        right: 'max(16px, calc(50vw - 224px))',
+                        width: 54, height: 54,
+                        background: 'var(--color-primary)',
+                        border: '3px solid #000',
+                        borderRadius: '50%',
+                        boxShadow: '4px 4px 0 #000',
+                        fontSize: 26, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 1500,
+                    }}
+                    title="Nova Missão"
+                >＋</button>
+            )}
+
+            {/* Modals */}
+            <MissionCreateModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSave={createTask}
+                childProfiles={childProfiles}
+                parentProfile={profile}
+            />
             <MissionEditModal
                 isOpen={isEditingModalOpen}
-                onClose={() => setIsEditingModalOpen(false)}
-                onSave={handleSaveUpdatedTask}
+                onClose={() => { setIsEditingModalOpen(false); setEditingQuest(null); }}
+                onSave={async (id, updates) => { await updateTask(id, updates); setIsEditingModalOpen(false); setEditingQuest(null); }}
                 quest={editingQuest}
                 childProfiles={childProfiles}
                 parentProfile={profile}
             />
+            <HeroCreateModal
+                isOpen={isHeroCreateOpen}
+                onClose={() => setIsHeroCreateOpen(false)}
+                parentProfileId={profile.id}
+                onCreated={() => {
+                    setIsHeroCreateOpen(false);
+                    // Força o recarregamento temporário para refletir o novo herói na tela
+                    // A solução ideal de longo prazo seria exportar `fetchAll` no useAppData e executá-lo aqui.
+                    window.location.reload();
+                }}
+            />
+            {/* PIN entry for same-device hero switch */}
+            {pendingSwitch && (
+                <PinEntry
+                    isOpen={true}
+                    onClose={() => setPendingSwitch(null)}
+                    onSuccess={() => onSwitchToHero?.(pendingSwitch)}
+                    heroName={pendingSwitch.nome}
+                />
+            )}
+
+            {/* Modal Editar Perfil do Mestre e Assinatura */}
+            <Modal
+                isOpen={isEditMasterOpen}
+                onClose={() => setIsEditMasterOpen(false)}
+                title="⚙️ Configurações"
+            >
+                <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    setIsSavingMaster(true);
+                    await updateProfile(profile.id, {
+                        nome: editMasterName,
+                        data_nascimento: editMasterBirthDate || null,
+                        avatar: editMasterPhoto || null,
+                        foto_url: editMasterPhoto || null
+                    });
+                    setIsSavingMaster(false);
+                    setIsEditMasterOpen(false);
+                }} className="flex-col gap-3">
+
+                    <div style={{ padding: 'var(--space-3)', background: '#F8FAFC', borderRadius: 12, border: '2px solid #E2E8F0' }}>
+                        <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 14, textTransform: 'uppercase', opacity: 0.6 }}>👤 Perfil</h3>
+                        <div className="flex-col gap-3">
+                            <div className="flex-col gap-1">
+                                <label className="neo-label">Nome de Mestre</label>
+                                <input
+                                    type="text" className="neo-input"
+                                    value={editMasterName} onChange={e => setEditMasterName(e.target.value)}
+                                    required placeholder="Seu nome"
+                                />
+                            </div>
+
+                            <div className="flex-col gap-1">
+                                <label className="neo-label">Foto de Perfil</label>
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={/^https?:\/\//.test(editMasterPhoto) ? editMasterPhoto : `https://api.dicebear.com/7.x/avataaars/svg?seed=${editMasterName}`}
+                                        style={{ width: 60, height: 60, borderRadius: '50%', border: '3px solid #000', objectFit: 'cover' }}
+                                        alt="Preview"
+                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${editMasterName}`; }}
+                                    />
+                                    <div style={{ flex: 1 }}>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            id="master-photo-upload"
+                                            style={{ display: 'none' }}
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = () => {
+                                                        setTempImage(reader.result as string);
+                                                        setIsCropperOpen(true);
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                        <label
+                                            htmlFor="master-photo-upload"
+                                            className="neo-button"
+                                            style={{ fontSize: 12, padding: '8px 12px', background: '#fff', width: '100%' }}
+                                        >
+                                            {uploadingImage ? '⬆️ Enviando...' : '📷 Alterar Foto'}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex-col gap-1">
+                                <label className="neo-label">Data de Nascimento</label>
+                                <input
+                                    type="date" className="neo-input"
+                                    value={editMasterBirthDate} onChange={e => setEditMasterBirthDate(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ padding: 'var(--space-3)', background: 'var(--color-primary-light)', borderRadius: 12, border: '2px solid var(--color-primary)' }}>
+                        <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 14, textTransform: 'uppercase', opacity: 0.6 }}>💎 Assinatura</h3>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p style={{ margin: 0, fontWeight: 800 }}>Plano Gratuito</p>
+                                <p style={{ margin: 0, fontSize: 11, opacity: 0.7 }}>Até 3 heróis e 10 missões/dia</p>
+                            </div>
+                            <span style={{
+                                background: '#000', color: '#fff',
+                                fontSize: 10, fontWeight: 800, padding: '4px 8px',
+                                borderRadius: 6, textTransform: 'uppercase'
+                            }}>ATIVO</span>
+                        </div>
+                        <button
+                            type="button"
+                            className="neo-button w-full"
+                            style={{ marginTop: 'var(--space-2)', background: 'var(--color-primary)', fontSize: 12, padding: '8px' }}
+                            onClick={() => alert('Em breve: Novas funcionalidades de Assinatura!')}
+                        >
+                            Fazer Upgrade
+                        </button>
+                    </div>
+
+                    <div className="flex gap-2" style={{ marginTop: 'var(--space-1)' }}>
+                        <button type="submit" disabled={isSavingMaster || uploadingImage} className="neo-button" style={{ flex: 1, background: 'var(--color-success)', color: 'white' }}>
+                            {isSavingMaster ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
+                        </button>
+                        <button type="button" disabled={isSavingMaster} className="neo-button" style={{ flex: 1, background: '#eee' }} onClick={() => setIsEditMasterOpen(false)}>
+                            CANCELAR
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            <ImageCropperModal
+                isOpen={isCropperOpen}
+                image={tempImage}
+                onClose={() => setIsCropperOpen(false)}
+                onCropComplete={async (croppedBlob) => {
+                    setIsCropperOpen(false);
+                    setUploadingImage(true);
+                    const url = await uploadAvatar(croppedBlob, profile.id);
+                    if (url) setEditMasterPhoto(url);
+                    setUploadingImage(false);
+                }}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={!!heroToDelete}
+                onClose={() => setHeroToDelete(null)}
+                onConfirm={() => {
+                    if (heroToDelete) {
+                        deleteProfile(heroToDelete.id);
+                        setHeroToDelete(null);
+                    }
+                }}
+                title="Expulsar Herói"
+                message={`Você tem certeza que deseja remover ${heroToDelete?.nome} do clã? Esta ação não pode ser desfeita.`}
+            />
 
             <style>{`
                 @keyframes slideIn {
-                    from { transform: translateY(20px); opacity: 0; }
+                    from { transform: translateY(14px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }
-                }
-                @keyframes pulse {
-                    0% { transform: scale(1); }
-                    50% { transform: scale(1.05); }
-                    100% { transform: scale(1); }
                 }
             `}</style>
         </div>

@@ -81,7 +81,7 @@ export const Tavern: React.FC<TavernProps> = ({ fcBalance, onPurchase }) => {
                     <p style={{ fontWeight: 800 }}>A taverna está vazia... Peça ao Mestre para adicionar recompensas!</p>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 'var(--space-3)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-3)' }}>
                     {rewards.map(reward => (
                         <RewardCard
                             key={reward.id}

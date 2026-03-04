@@ -80,7 +80,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister
     return (
         <div
             className="mobile-app-container flex items-center justify-center w-full"
-            style={{ padding: 'var(--space-4)', background: 'var(--color-secondary)' }}
+            style={{ padding: 'var(--space-4)', background: 'var(--color-surface)' }}
         >
             <div
                 className={`neo-box flex-col items-center ${shake ? 'shake-animation' : ''}`}
@@ -90,10 +90,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister
                 <Mascot size={110} state={mascotState} />
 
                 <h1 style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-2xl)' }}>
-                    Portal do Herói
+                    Portal do Mestre
                 </h1>
                 <p style={{ marginBottom: 'var(--space-5)', fontWeight: 800, opacity: 0.8 }}>
-                    Entre para iniciar sua aventura
+                    Acesse para gerenciar seu clã
                 </p>
 
                 <form onSubmit={handleSubmit} style={{ width: '100%' }}>
@@ -158,7 +158,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister
                         style={{ width: '100%', padding: 'var(--space-3)', fontSize: 'var(--font-size-lg)', marginTop: 'var(--space-2)' }}
                         disabled={isSubmitting}
                     >
-                        {isSubmitting ? '🕹️ ENTRANDO...' : '🕹️ START GAME'}
+                        {isSubmitting ? '🕹️ ENTRANDO...' : '🕹️ ACESSAR PAINEL'}
                     </button>
                 </form>
 
@@ -168,7 +168,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister
                     className="neo-link"
                     style={{ marginTop: 'var(--space-4)', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                    Novo por aqui? Crie seu herói →
+                    Novo por aqui? Crie sua conta de Mestre →
                 </button>
             </div>
         </div>

@@ -10,8 +10,6 @@ export const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigat
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
-    const [role, setRole] = useState<'heroi' | 'mestre'>('heroi');
-
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -20,16 +18,20 @@ export const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigat
         setIsSubmitting(true);
         setError(null);
 
+        const params = new URLSearchParams(window.location.search);
+        const inviteClanId = params.get('invite_clan');
+
         try {
             // 1. SignUp no Supabase Auth + Metadata pro DB Trigger
-            const dbRole = role === 'mestre' ? 'parent' : 'child';
+            // Note: Everyone starting via Register is a 'parent'
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     data: {
                         nome: username,
-                        role: dbRole,
+                        role: 'parent',
+                        clan_id: inviteClanId || null,
                         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
                     }
                 }
@@ -38,10 +40,6 @@ export const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigat
             if (authError) throw authError;
             if (!authData.user) throw new Error('Falha ao criar usuário.');
 
-            // O Perfil agora é criado automaticamente por um Trigger (handle_new_user) 
-            // no banco de dados, ouvindo a tabela auth.users.
-
-            // 2. Sucesso
             onRegisterSuccess(email);
 
         } catch (err) {
@@ -56,25 +54,25 @@ export const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigat
     };
 
     return (
-        <div className="mobile-app-container flex items-center justify-center w-full" style={{ padding: 'var(--space-2)', background: 'var(--color-secondary)' }}>
+        <div className="mobile-app-container flex items-center justify-center w-full" style={{ padding: 'var(--space-2)', background: 'var(--color-surface)' }}>
 
             <div
                 className={`neo-box p-4 flex-col items-center ${error ? 'shake-animation' : ''}`}
                 style={{ width: '100%', maxWidth: '400px', padding: 'var(--space-4)', textAlign: 'center', background: 'var(--color-surface)' }}
             >
-                <h1 style={{ marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-2xl)' }}>Recrutamento</h1>
-                <p style={{ marginBottom: 'var(--space-4)', fontWeight: 800, opacity: 0.8 }}>Junte-se à Guilda Familiar!</p>
+                <h1 style={{ marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-2xl)' }}>Portal do Mestre</h1>
+                <p style={{ marginBottom: 'var(--space-4)', fontWeight: 800, opacity: 0.8 }}>Crie seu clã e comece a aventura!</p>
 
                 <form onSubmit={handleSubmit} style={{ width: '100%' }} className="flex-col gap-3">
 
                     <div className="flex-col gap-1" style={{ textAlign: 'left' }}>
-                        <label className="neo-label">Nome do Personagem</label>
+                        <label className="neo-label">Seu Nome (Mestre)</label>
                         <input
                             type="text"
                             className="neo-input"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Ex: ArthurOInvisível"
+                            placeholder="Ex: Mestre Arthur"
                             required
                         />
                     </div>
@@ -104,19 +102,6 @@ export const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigat
                         />
                     </div>
 
-                    <div className="flex-col gap-1" style={{ textAlign: 'left' }}>
-                        <label className="neo-label">Classe no Jogo</label>
-                        <select
-                            className="neo-input"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value as 'heroi' | 'mestre')}
-                            style={{ cursor: 'pointer' }}
-                        >
-                            <option value="heroi">Herói (Faz as missões)</option>
-                            <option value="mestre">Mestre (Cria as missões)</option>
-                        </select>
-                    </div>
-
                     {error && (
                         <div style={{ color: 'red', fontWeight: 800, fontSize: 'var(--font-size-sm)', marginTop: 'var(--space-1)' }}>
                             {error}
@@ -129,7 +114,7 @@ export const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigat
                         disabled={isSubmitting}
                         style={{ marginTop: 'var(--space-2)', padding: 'var(--space-3)', fontSize: 'var(--font-size-lg)' }}
                     >
-                        {isSubmitting ? '🕹️ REGISTRANDO...' : '🕹️ CRIAR PERSONAGEM'}
+                        {isSubmitting ? '🕹️ CRIANDO CONTA...' : '🕹️ CRIAR MINHA CONTA'}
                     </button>
 
                     <button

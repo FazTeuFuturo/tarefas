@@ -449,3 +449,77 @@ p {
   background: var(--color-secondary);
   border-style: solid;
 }
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.15s ease-out forwards;
+}
+
+.modal-overlay.modal-closing {
+  animation: fadeOut 0.2s ease-in forwards;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-surface);
+  border-radius: 24px 24px 0 0;
+  padding: var(--space-4);
+  max-height: 92vh;
+  overflow-y: auto;
+  border: 3px solid #000;
+  border-bottom: none;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content.modal-closing {
+  animation: slideDown 0.25s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(100%);
+  }
+}
