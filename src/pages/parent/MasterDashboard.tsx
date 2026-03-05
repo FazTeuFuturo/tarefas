@@ -40,6 +40,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [isMasterCreateOpen, setIsMasterCreateOpen] = useState(false);
     const [pendingSwitch, setPendingSwitch] = useState<any | null>(null);
     const [heroToDelete, setHeroToDelete] = useState<any | null>(null);
+    const [statusFilter, setStatusFilter] = useState<'active' | 'pending'>('active');
 
     // Identifica se o Mestre atual é o dono do Clã (Primary Parent)
     // Um Parent secundário tem o campo created_by preenchido (que aponta para outro Parent) e/ou id diferente do clan_id
@@ -90,14 +91,14 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const pendingQuests = managedQuests.filter(q => q.status === 'pending');
     const pendingCount = pendingQuests.length;
 
-    // All relevant quests (managed + own), filtered by selected member
-    const allActiveQuests = [...managedQuests, ...myQuests.filter(q => !managedQuests.find(mq => mq.id === q.id))]
-        .filter(q => q.status === 'active' || q.status === 'pending');
+    // All relevant quests (managed + own), filtered by selected member and status
+    const allRelevantQuests = [...managedQuests, ...myQuests.filter(q => !managedQuests.find(mq => mq.id === q.id))]
+        .filter(q => q.status === statusFilter);
     const filteredQuests = filterMember === 'all'
-        ? allActiveQuests
+        ? allRelevantQuests
         : filterMember === 'unassigned'
-            ? allActiveQuests.filter(q => !q.assignee_id)
-            : allActiveQuests.filter(q => q.assignee_id === filterMember);
+            ? allRelevantQuests.filter(q => !q.assignee_id)
+            : allRelevantQuests.filter(q => q.assignee_id === filterMember);
 
     if (!profile) return null;
 
@@ -144,64 +145,14 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         {/* Status */}
                         <StatusBar level={profile.nivel} xp={profile.xp} xpMax={profile.nivel * 100 + 500} credits={profile.fc_balance} />
 
-                        {/* Validações pendentes */}
-                        {pendingCount > 0 ? (
-                            <div className="flex-col gap-2">
-                                <div className="flex items-center justify-between">
-                                    <h2 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>
-                                        🛡️ Validar Missões
-                                    </h2>
-                                    <span style={{
-                                        background: 'var(--color-danger)', color: '#fff',
-                                        fontWeight: 800, fontSize: 12, padding: '2px 10px',
-                                        borderRadius: 99, border: '2px solid #000'
-                                    }}>
-                                        {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
-                                    </span>
-                                </div>
-
-                                {pendingQuests.map(q => {
-                                    const hero = leaderboard.find(p => p.id === q.assignee_id);
-                                    return (
-                                        <div key={q.id} className="neo-box" style={{ padding: 'var(--space-3)', borderLeft: '5px solid var(--color-danger)' }}>
-                                            {hero && (
-                                                <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
-                                                    <img src={hero.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero.nome}`}
-                                                        style={{ width: 26, height: 26, borderRadius: '50%', border: '2px solid #000' }} alt={hero.nome} />
-                                                    <span style={{ fontWeight: 800, fontSize: 12 }}>{hero.nome} concluiu:</span>
-                                                </div>
-                                            )}
-                                            <p style={{ margin: '0 0 8px', fontWeight: 800 }}>{q.titulo}</p>
-                                            <div className="flex gap-2" style={{ marginBottom: 10 }}>
-                                                <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--color-secondary)', padding: '2px 8px', border: '2px solid #000', borderRadius: 4 }}>⭐ {q.xp_reward} XP</span>
-                                                <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--color-primary)', padding: '2px 8px', border: '2px solid #000', borderRadius: 4 }}>🪙 {q.fc_reward} FC</span>
-                                            </div>
-                                            <button
-                                                className="neo-button w-full"
-                                                onClick={() => approveQuest(q.id)}
-                                                style={{ background: 'var(--color-success)', color: '#fff', padding: 'var(--space-2)', marginBottom: 6 }}
-                                            >
-                                                ✅ APROVAR
-                                            </button>
-                                            <button
-                                                onClick={() => rejectQuest(q.id)}
-                                                style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 13, color: 'var(--color-danger)', textDecoration: 'underline', padding: '4px 0' }}
-                                            >
-                                                ✕ Recusar
-                                            </button>
-                                        </div>
-                                    );
-                                })}
+                        {/* Espaço reservado para estatísticas futuras */}
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 12, background: '#f8fafc' }}>
+                            <span style={{ fontSize: 32 }}>📈</span>
+                            <div>
+                                <p style={{ margin: 0, fontWeight: 800 }}>Mural de Performance</p>
+                                <p style={{ margin: 0, fontSize: 13, opacity: 0.6 }}>Em breve: Estatísticas detalhadas do clã.</p>
                             </div>
-                        ) : (
-                            <div className="neo-box" style={{ padding: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 12, background: '#f0fdf4' }}>
-                                <span style={{ fontSize: 32 }}>✅</span>
-                                <div>
-                                    <p style={{ margin: 0, fontWeight: 800 }}>Tudo em dia!</p>
-                                    <p style={{ margin: 0, fontSize: 13, opacity: 0.6 }}>Nenhuma missão aguardando validação.</p>
-                                </div>
-                            </div>
-                        )}
+                        </div>
                     </div>
                 )}
 
@@ -210,7 +161,39 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease', paddingBottom: 80 }}>
                         <div className="flex items-center justify-between">
                             <h2 style={{ margin: 0 }}>📋 Missões do Clã</h2>
-                            <span style={{ fontWeight: 800, fontSize: 12, opacity: 0.6 }}>{allActiveQuests.length} em andamento</span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setStatusFilter('active')}
+                                    className="neo-button"
+                                    style={{
+                                        padding: '4px 12px', fontSize: 11,
+                                        background: statusFilter === 'active' ? 'var(--color-secondary)' : '#eee'
+                                    }}
+                                >
+                                    ATIVAS
+                                </button>
+                                <button
+                                    onClick={() => setStatusFilter('pending')}
+                                    className="neo-button"
+                                    style={{
+                                        padding: '4px 12px', fontSize: 11,
+                                        background: statusFilter === 'pending' ? 'var(--color-danger)' : '#eee',
+                                        color: statusFilter === 'pending' ? '#fff' : '#000',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    PENDENTES
+                                    {pendingCount > 0 && (
+                                        <span style={{
+                                            position: 'absolute', top: -8, right: -8,
+                                            background: '#000', color: '#fff',
+                                            borderRadius: '50%', width: 18, height: 18,
+                                            fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            border: '2px solid #fff'
+                                        }}>{pendingCount}</span>
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Filtro por membro */}
@@ -235,8 +218,12 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
 
                         {filteredQuests.length === 0 ? (
                             <div className="neo-box" style={{ padding: 'var(--space-4)', textAlign: 'center', opacity: 0.5 }}>
-                                <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}>😴</span>
-                                <p style={{ margin: 0, fontWeight: 800 }}>Nenhuma missão ativa.</p>
+                                <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}>
+                                    {statusFilter === 'active' ? '😴' : '✅'}
+                                </span>
+                                <p style={{ margin: 0, fontWeight: 800 }}>
+                                    {statusFilter === 'active' ? 'Nenhuma missão ativa.' : 'Nenhuma missão pendente.'}
+                                </p>
                             </div>
                         ) : (
                             <QuestList
