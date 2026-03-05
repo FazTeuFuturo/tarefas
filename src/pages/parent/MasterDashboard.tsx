@@ -43,8 +43,27 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [statusFilter, setStatusFilter] = useState<'active' | 'pending'>('active');
 
     // Identifica se o Mestre atual é o dono do Clã (Primary Parent)
-    // Um Parent secundário tem o campo created_by preenchido (que aponta para outro Parent) e/ou id diferente do clan_id
     const isPrimaryParent = profile?.role === 'parent' && (!profile?.created_by || profile?.id === profile?.clan_id);
+
+    // Lógica de Planos e Limites (MVP)
+    const currentPlan = (profile as any)?.plan || 'free'; // 'free' ou 'premium'
+    const limits = {
+        free: { heroes: 1, masters: 1, normalQuests: 2, recurringQuests: 1 },
+        premium: { heroes: 3, masters: 2, normalQuests: 100, recurringQuests: 100 }
+    }[currentPlan as 'free' | 'premium'] || { heroes: 1, masters: 1, normalQuests: 2, recurringQuests: 1 };
+
+    const numHeroes = leaderboard.filter(m => m.role === 'child').length;
+    const numMasters = leaderboard.filter(m => m.role === 'parent').length;
+
+    // Contagem de Missões para Limites
+    const activeQuestsList = managedQuests.filter(q => q.status !== 'approved'); // Somente as que ainda não foram finalizadas/aprovadas
+    const normalCount = activeQuestsList.filter(q => !q.is_recurring).length;
+    const recurringCount = activeQuestsList.filter(q => q.is_recurring).length;
+
+    const canAddHero = numHeroes < limits.heroes;
+    const canAddMaster = numMasters < limits.masters;
+    const canAddNormalQuest = normalCount < limits.normalQuests;
+    const canAddRecurringQuest = recurringCount < limits.recurringQuests;
 
     const [isEditMasterOpen, setIsEditMasterOpen] = useState(false);
     const [editMasterName, setEditMasterName] = useState('');
@@ -475,26 +494,44 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                     </div>
                                 ))}
 
-                                {/* Card de adicionar novo herói */}
+                                {/* Card de adicionar novo herói ou CTA de Upgrade */}
                                 {isPrimaryParent && (
-                                    <button
-                                        onClick={() => setIsHeroCreateOpen(true)}
-                                        style={{
-                                            border: '3px dashed #bbb',
-                                            borderRadius: 12, background: 'transparent',
-                                            cursor: 'pointer', padding: 'var(--space-3)',
-                                            display: 'flex', flexDirection: 'column',
-                                            alignItems: 'center', justifyContent: 'center',
-                                            gap: 8, minHeight: 160,
-                                            transition: 'border-color 0.15s, background 0.15s',
-                                            color: '#888',
-                                        }}
-                                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.background = '#f9f9f9'; }}
-                                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#bbb'; e.currentTarget.style.background = 'transparent'; }}
-                                    >
-                                        <span style={{ fontSize: 32, display: 'block' }}>＋</span>
-                                        <span style={{ fontSize: 13, fontWeight: 800 }}>Novo Herói</span>
-                                    </button>
+                                    canAddHero ? (
+                                        <button
+                                            onClick={() => setIsHeroCreateOpen(true)}
+                                            style={{
+                                                border: '3px dashed #bbb',
+                                                borderRadius: 12, background: 'transparent',
+                                                cursor: 'pointer', padding: 'var(--space-3)',
+                                                display: 'flex', flexDirection: 'column',
+                                                alignItems: 'center', justifyContent: 'center',
+                                                gap: 8, minHeight: 160,
+                                                transition: 'border-color 0.15s, background 0.15s',
+                                                color: '#888',
+                                            }}
+                                            onMouseEnter={e => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.background = '#f9f9f9'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#bbb'; e.currentTarget.style.background = 'transparent'; }}
+                                        >
+                                            <span style={{ fontSize: 32, display: 'block' }}>＋</span>
+                                            <span style={{ fontSize: 13, fontWeight: 800 }}>Novo Herói</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => alert('Limite atingido! Faça upgrade para o Plano Premium (R$ 9,90) para adicionar até 3 heróis.')}
+                                            style={{
+                                                border: '3px dashed var(--color-danger)',
+                                                borderRadius: 12, background: 'rgba(239, 68, 68, 0.05)',
+                                                cursor: 'pointer', padding: 'var(--space-3)',
+                                                display: 'flex', flexDirection: 'column',
+                                                alignItems: 'center', justifyContent: 'center',
+                                                gap: 8, minHeight: 160,
+                                                color: 'var(--color-danger)',
+                                            }}
+                                        >
+                                            <span style={{ fontSize: 24, display: 'block' }}>💎</span>
+                                            <span style={{ fontSize: 11, fontWeight: 800, textAlign: 'center' }}>LIMITE ATINGIDO<br /><span style={{ fontSize: 10, opacity: 0.7 }}>Clique p/ Upgrade</span></span>
+                                        </button>
+                                    )
                                 )}
                             </div>
                         </div>
@@ -550,25 +587,44 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                     </div>
                                 ))}
 
-                                {/* Botão de Adicionar Mestre */}
+                                {/* Botão de Adicionar Mestre ou CTA de Upgrade */}
                                 {isPrimaryParent && (
-                                    <button
-                                        onClick={() => setIsMasterCreateOpen(true)}
-                                        style={{
-                                            border: '3px dashed var(--color-primary)',
-                                            borderRadius: 12, background: 'transparent',
-                                            cursor: 'pointer', padding: 'var(--space-3)',
-                                            display: 'flex', flexDirection: 'column',
-                                            alignItems: 'center', justifyContent: 'center',
-                                            gap: 6, transition: 'all 0.2s',
-                                            minHeight: 120
-                                        }}
-                                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.borderColor = '#000'; }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
-                                    >
-                                        <span style={{ fontSize: 24, display: 'block' }}>🤝</span>
-                                        <span style={{ fontSize: 13, fontWeight: 800 }}>Adicionar Mestre</span>
-                                    </button>
+                                    canAddMaster ? (
+                                        <button
+                                            onClick={() => setIsMasterCreateOpen(true)}
+                                            style={{
+                                                border: '3px dashed var(--color-primary)',
+                                                borderRadius: 12, background: 'transparent',
+                                                cursor: 'pointer', padding: 'var(--space-3)',
+                                                display: 'flex', flexDirection: 'column',
+                                                alignItems: 'center', justifyContent: 'center',
+                                                gap: 6, transition: 'all 0.2s',
+                                                minHeight: 120
+                                            }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.borderColor = '#000'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+                                        >
+                                            <span style={{ fontSize: 24, display: 'block' }}>🤝</span>
+                                            <span style={{ fontSize: 13, fontWeight: 800 }}>Adicionar Mestre</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => alert('Limite de Mestres atingido! No Plano Premium você pode ter co-parentalidade (2 mestres).')}
+                                            style={{
+                                                border: '3px dashed #bbb',
+                                                borderRadius: 12, background: '#f5f5f5',
+                                                cursor: 'pointer', padding: 'var(--space-3)',
+                                                display: 'flex', flexDirection: 'column',
+                                                alignItems: 'center', justifyContent: 'center',
+                                                gap: 6, minHeight: 120,
+                                                color: '#888',
+                                                opacity: 0.8
+                                            }}
+                                        >
+                                            <span style={{ fontSize: 20, display: 'block' }}>🚫</span>
+                                            <span style={{ fontSize: 11, fontWeight: 800, textAlign: 'center' }}>LIMITE ATINGIDO</span>
+                                        </button>
+                                    )
                                 )}
                             </div>
                         </div>
@@ -579,9 +635,13 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
 
             {/* ────── BOTTOM NAV ────── */}
             <nav className="bottom-nav">
-                <button className={`nav-item ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')} style={{ position: 'relative' }}>
+                <button className={`nav-item ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>
                     <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>🏠</span>
                     Início
+                </button>
+                <button className={`nav-item ${view === 'missions' ? 'active' : ''}`} onClick={() => setView('missions')} style={{ position: 'relative' }}>
+                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>📋</span>
+                    Missões
                     {pendingCount > 0 && (
                         <span style={{
                             position: 'absolute', top: 6, right: '18%',
@@ -591,10 +651,6 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                             border: '2px solid #fff', fontWeight: 800
                         }}>{pendingCount}</span>
                     )}
-                </button>
-                <button className={`nav-item ${view === 'missions' ? 'active' : ''}`} onClick={() => setView('missions')}>
-                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>📋</span>
-                    Missões
                 </button>
                 <button className={`nav-item ${view === 'tavern' ? 'active' : ''}`} onClick={() => setView('tavern')}>
                     <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>🍺</span>
@@ -609,7 +665,13 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
             {/* FAB — Nova Missão */}
             {view === 'missions' && (
                 <button
-                    onClick={() => setIsCreateModalOpen(true)}
+                    onClick={() => {
+                        if (canAddNormalQuest || canAddRecurringQuest) {
+                            setIsCreateModalOpen(true);
+                        } else {
+                            alert(`Limite de missões atingido no plano atual (${limits.normalQuests} normais / ${limits.recurringQuests} recorrente). Faça upgrade para o Plano Premium!`);
+                        }
+                    }}
                     style={{
                         position: 'fixed',
                         bottom: 86,
@@ -757,23 +819,28 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 14, textTransform: 'uppercase', opacity: 0.6 }}>💎 Assinatura</h3>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p style={{ margin: 0, fontWeight: 800 }}>Plano Gratuito</p>
-                                <p style={{ margin: 0, fontSize: 11, opacity: 0.7 }}>Até 3 heróis e 10 missões/dia</p>
+                                <p style={{ margin: 0, fontWeight: 800 }}>{currentPlan === 'premium' ? 'Plano Clã Lendário' : 'Plano Aprendiz (Grátis)'}</p>
+                                <p style={{ margin: 0, fontSize: 11, opacity: 0.7 }}>
+                                    {currentPlan === 'premium' ? 'Até 3 heróis e 2 mestres' : 'Até 1 herói e 1 mestre'}
+                                </p>
                             </div>
                             <span style={{
-                                background: '#000', color: '#fff',
+                                background: currentPlan === 'premium' ? 'var(--color-tertiary)' : '#000',
+                                color: currentPlan === 'premium' ? '#000' : '#fff',
                                 fontSize: 10, fontWeight: 800, padding: '4px 8px',
                                 borderRadius: 6, textTransform: 'uppercase'
-                            }}>ATIVO</span>
+                            }}>{currentPlan === 'premium' ? 'DIAMANTE' : 'ATIVO'}</span>
                         </div>
-                        <button
-                            type="button"
-                            className="neo-button w-full"
-                            style={{ marginTop: 'var(--space-2)', background: 'var(--color-primary)', fontSize: 12, padding: '8px' }}
-                            onClick={() => alert('Em breve: Novas funcionalidades de Assinatura!')}
-                        >
-                            Fazer Upgrade
-                        </button>
+                        {currentPlan !== 'premium' && (
+                            <button
+                                type="button"
+                                className="neo-button w-full"
+                                style={{ marginTop: 'var(--space-2)', background: 'var(--color-tertiary)', fontSize: 12, padding: '8px' }}
+                                onClick={() => alert('Em breve integração com checkout do Stripe/Mercado Pago para o plano de R$ 9,90!')}
+                            >
+                                Fazer Upgrade — R$ 9,90/mês
+                            </button>
+                        )}
                     </div>
 
                     <div className="flex gap-2" style={{ marginTop: 'var(--space-1)' }}>
