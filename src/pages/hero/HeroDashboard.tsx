@@ -35,13 +35,14 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
         <div className="mobile-app-container">
             <header style={{
                 padding: 'var(--space-3) var(--space-2)',
-                background: 'var(--color-primary)',
-                borderBottom: '3px solid #000',
+                background: 'linear-gradient(135deg, var(--night-200), var(--night-100))',
+                borderBottom: 'var(--border-width) solid var(--color-border-gold)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between'
             }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>⚔️ {activeProfile.nome}</h1>
-                    <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)', opacity: 0.8 }}>O que vamos conquistar hoje?</p>
+                    <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', textShadow: '0 0 12px rgba(245,166,35,0.5)' }}>⚔️ {activeProfile.nome}</h1>
+                    <p style={{ margin: 0, fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>O que vamos conquistar hoje?</p>
                 </div>
                 <div className="flex gap-2 items-center">
                     {heroExitButton}
@@ -60,19 +61,13 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                         <div className="hide-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginTop: 'var(--space-2)' }}>
                             <button
                                 onClick={() => setFilterMember('all')}
-                                style={{
-                                    padding: '6px 12px', borderRadius: 20, border: '2px solid #000', fontWeight: 800, fontSize: 12, whiteSpace: 'nowrap',
-                                    background: filterMember === 'all' ? '#000' : '#fff', color: filterMember === 'all' ? '#fff' : '#000'
-                                }}
+                                className={`filter-chip${filterMember === 'all' ? ' active' : ''}`}
                             >Todos</button>
                             {leaderboard.map(hero => (
                                 <button
                                     key={hero.id}
                                     onClick={() => setFilterMember(hero.id)}
-                                    style={{
-                                        padding: '6px 12px', borderRadius: 20, border: '2px solid #000', fontWeight: 800, fontSize: 12, whiteSpace: 'nowrap',
-                                        background: filterMember === hero.id ? '#000' : '#fff', color: filterMember === hero.id ? '#fff' : '#000'
-                                    }}
+                                    className={`filter-chip${filterMember === hero.id ? ' active' : ''}`}
                                 >{hero.id === activeProfile.id ? 'Eu' : (hero.nome || 'Herói')}</button>
                             ))}
                         </div>
@@ -80,7 +75,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                         {dailyTasks.length > 0 && (
                             <div className="flex-col gap-2">
                                 <div className="flex justify-between items-center">
-                                    <h2 style={{ fontSize: 'var(--font-size-lg)', margin: 0 }}>☀️ Deveres Diários</h2>
+                                    <h2 style={{ fontSize: 'var(--font-size-lg)', margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>☀️ Deveres Diários</h2>
                                     <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 800, color: 'var(--color-tertiary)' }}>
                                         {completedDaily}/{dailyTasks.length} feitos
                                     </span>
@@ -96,10 +91,10 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                             </div>
                         )}
 
-                        <h2 style={{ marginTop: 'var(--space-2)', marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-lg)' }}>⚔️ Missões de Aventura</h2>
+                        <h2 style={{ marginTop: 'var(--space-2)', marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-lg)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>⚔️ Missões de Aventura</h2>
                         {adventureQuests.length === 0 && (
-                            <div className="neo-box" style={{ padding: 'var(--space-3)', textAlign: 'center', opacity: 0.6 }}>
-                                <p style={{ margin: 0 }}>😴 Nenhuma missão de aventura no momento.</p>
+                            <div className="neo-box" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
+                                <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>😴 Nenhuma missão de aventura no momento.</p>
                             </div>
                         )}
                         <QuestList
@@ -124,14 +119,14 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                 {view === 'clan' && (
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
                         {/* Ranking da Família */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-primary)' }}>
-                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'linear-gradient(135deg, var(--color-surface), var(--color-surface-alt))', borderColor: 'var(--color-border-gold)' }}>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>
                                 🎖️ Ranking da Família
                             </h3>
                             <div className="flex-col gap-2">
                                 {leaderboard.map((member, idx) => (
                                     <div key={member.id} className="neo-box flex items-center gap-3"
-                                        style={{ padding: 'var(--space-2)', background: '#fff' }}>
+                                        style={{ padding: 'var(--space-2)', background: 'var(--color-surface)' }}>
                                         <span style={{ fontWeight: 800, fontSize: idx === 0 ? 26 : 20, width: 34, textAlign: 'center', flexShrink: 0 }}>
                                             {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
                                         </span>
@@ -167,10 +162,10 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
 
                         {/* Heróis do Clã */}
                         <div>
-                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>⚔️ Heróis do Clã</h3>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>⚔️ Heróis do Clã</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                                 {leaderboard.filter(m => m.role === 'child').map(hero => (
-                                    <div key={hero.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, background: '#fff' }}>
+                                    <div key={hero.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--color-surface)' }}>
                                         {hero.id === activeProfile.id && (
                                             <button
                                                 onClick={() => setIsSettingsOpen(true)}
@@ -209,10 +204,10 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
 
                         {/* Mestres do Clã */}
                         <div style={{ marginTop: 'var(--space-2)' }}>
-                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🧙‍♂️ Mestres</h3>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-text-muted)' }}>🧙‍♂️ Mestres</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                                 {leaderboard.filter(m => m.role === 'parent').map(master => (
-                                    <div key={master.id} className="neo-box" style={{ padding: 'var(--space-3)', opacity: 0.9, textAlign: 'center', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div key={master.id} className="neo-box" style={{ padding: 'var(--space-3)', textAlign: 'center', background: 'var(--color-surface)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                         <img
                                             src={/^https?:\/\//.test(master.avatar || '') ? master.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${master.nome}`}
                                             style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid #000', margin: '0 auto 8px', display: 'block', objectFit: 'cover' }}
@@ -232,15 +227,15 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
             {/* ─── BOTTOM NAV ─── */}
             <nav className="bottom-nav">
                 <button className={`nav-item ${view === 'quests' ? 'active' : ''}`} onClick={() => setView('quests')}>
-                    <span style={{ fontSize: '1.5rem', marginBottom: '4px' }}>📋</span>
+                    <span className="nav-icon">⚔️</span>
                     Missões
                 </button>
                 <button className={`nav-item ${view === 'tavern' ? 'active' : ''}`} onClick={() => setView('tavern')}>
-                    <span style={{ fontSize: '1.5rem', marginBottom: '4px' }}>🍺</span>
+                    <span className="nav-icon">🏰</span>
                     Taverna
                 </button>
                 <button className={`nav-item ${view === 'clan' ? 'active' : ''}`} onClick={() => setView('clan')}>
-                    <span style={{ fontSize: '1.5rem', marginBottom: '4px' }}>🏆</span>
+                    <span className="nav-icon">🛡️</span>
                     Clã
                 </button>
             </nav>

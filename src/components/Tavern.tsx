@@ -59,7 +59,7 @@ export const Tavern: React.FC<TavernProps> = ({ fcBalance, onPurchase }) => {
         <div style={{ paddingBottom: 'var(--space-8)' }}>
             <div style={{ marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                    <h2 style={{ margin: 0 }}>🏰 Taverna</h2>
+                    <h2 style={{ margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', textShadow: '0 0 10px rgba(245,166,35,0.4)' }}>🏰 Taverna</h2>
                     <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)' }}>
                         Seu saldo: <span style={{ color: 'var(--color-primary)' }}>🪙 {fcBalance} FC</span>
                     </p>

@@ -120,7 +120,7 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
     return (
         <div style={{
             position: 'fixed', inset: 0, zIndex: 3000,
-            background: '#1a1a1a',
+            background: 'var(--color-background)',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             gap: 24, padding: '0 24px',
@@ -129,7 +129,7 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
             <div style={{ textAlign: 'center' }}>
                 <div style={{
                     width: 90, height: 90,
-                    border: '4px solid #fff',
+                    border: '4px solid var(--color-border-gold)',
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 12px',
@@ -143,8 +143,8 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                         <span style={{ fontSize: 50 }}>{hero.avatar || '🦸'}</span>
                     )}
                 </div>
-                <h2 style={{ color: '#fff', margin: 0, fontSize: 22 }}>Olá, {hero.nome}!</h2>
-                <p style={{ color: 'rgba(255,255,255,0.6)', margin: '6px 0 0', fontSize: 14 }}>
+                <h2 style={{ color: 'var(--color-text)', margin: 0, fontSize: 22, fontFamily: 'var(--font-family-heading)' }}>Olá, {hero.nome}!</h2>
+                <p style={{ color: 'var(--color-text-muted)', margin: '6px 0 0', fontSize: 14 }}>
                     {step === 'choose'
                         ? '🔐 Crie seu PIN secreto de 4 dígitos'
                         : '🔁 Repita o PIN para confirmar'}
@@ -156,13 +156,13 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                 {['choose', 'confirm'].map((stepLabel) => (
                     <div key={stepLabel} style={{
                         width: 8, height: 8, borderRadius: '50%',
-                        background: step === stepLabel ? '#fff' : 'rgba(255,255,255,0.3)',
+                        background: step === stepLabel ? 'var(--color-primary)' : 'var(--color-border)',
                         transition: 'background 0.2s',
                     }} />
                 ))}
             </div>
 
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 800, margin: 0, fontSize: 16 }}>
+            <p style={{ color: 'var(--color-text)', fontWeight: 800, margin: 0, fontSize: 16 }}>
                 {step === 'choose' ? 'Digite seu novo PIN' : 'Confirme o PIN'}
             </p>
 
@@ -172,8 +172,8 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                     <div key={i} style={{
                         width: 20, height: 20,
                         borderRadius: '50%',
-                        border: '3px solid #fff',
-                        background: d !== '' ? '#fff' : 'transparent',
+                        border: '3px solid var(--color-primary-light)',
+                        background: d !== '' ? 'var(--color-primary)' : 'transparent',
                         transition: 'background 0.1s ease',
                     }} />
                 ))}
@@ -200,9 +200,9 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                                 disabled={key !== 'DEL' && filledCount >= 4}
                                 style={{
                                     width: 72, height: 72, borderRadius: '50%',
-                                    border: '3px solid rgba(255,255,255,0.3)',
-                                    background: 'rgba(255,255,255,0.1)',
-                                    color: '#fff',
+                                    border: 'var(--border-width) solid var(--color-border)',
+                                    background: 'var(--color-surface)',
+                                    color: 'var(--color-text)',
                                     fontSize: key === 'DEL' ? 18 : 26,
                                     fontWeight: 800, cursor: 'pointer', transition: 'all 0.1s',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -216,7 +216,7 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                     })}
                 </div>
             ) : (
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 800, margin: 0 }}>
+                <p style={{ color: 'var(--color-text-muted)', fontWeight: 800, margin: 0 }}>
                     Entrando na aventura... ⚔️
                 </p>
             )}
@@ -226,7 +226,7 @@ export const SetupPin: React.FC<SetupPinProps> = ({ hero, onSuccess, onCancel })
                     onClick={onCancel}
                     style={{
                         background: 'none', border: 'none',
-                        color: 'rgba(255,255,255,0.4)', fontWeight: 800,
+                        color: 'var(--color-text-muted)', fontWeight: 800,
                         fontSize: 13, cursor: 'pointer', textDecoration: 'underline',
                     }}
                 >

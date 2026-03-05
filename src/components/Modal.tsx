@@ -49,7 +49,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, 
             >
                 {/* Drawer handle */}
                 <div style={{
-                    width: 40, height: 4, background: '#ddd',
+                    width: 40, height: 4, background: 'var(--color-border)',
                     borderRadius: 2, margin: '0 auto var(--space-3)',
                     position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)'
                 }} />

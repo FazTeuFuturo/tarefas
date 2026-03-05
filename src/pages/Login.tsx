@@ -85,7 +85,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister
     return (
         <div
             className="mobile-app-container flex items-center justify-center w-full"
-            style={{ padding: 'var(--space-4)', background: 'var(--color-surface)' }}
+            style={{ padding: 'var(--space-4)', background: 'var(--color-background)' }}
         >
             <div
                 className={`neo-box flex-col items-center ${shake ? 'shake-animation' : ''}`}
@@ -94,7 +94,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister
                 {/* Mascote */}
                 <Mascot size={110} state={mascotState} />
 
-                <h1 style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-2xl)' }}>
+                <h1 style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-2xl)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', textShadow: '0 0 14px rgba(245,166,35,0.5)' }}>
                     Portal do Mestre
                 </h1>
                 <p style={{ marginBottom: 'var(--space-5)', fontWeight: 800, opacity: 0.8 }}>
@@ -148,7 +148,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister
                                 padding: 'var(--space-2)',
                                 background: 'var(--color-danger)',
                                 color: '#fff',
-                                border: '3px solid #111',
+                                border: 'var(--border-width) solid var(--color-border)',
                                 fontWeight: 800,
                                 fontSize: 'var(--font-size-sm)',
                             }}

@@ -60,15 +60,16 @@ export const PWAInstallPrompt: React.FC = () => {
 
     return (
         <div style={{
-            background: 'var(--color-primary)',
-            color: '#fff',
+            background: 'linear-gradient(135deg, var(--purple-700), var(--purple-900))',
+            color: 'var(--color-text)',
+            border: 'var(--border-width) solid var(--color-tertiary-light)',
+            boxShadow: 'var(--glow-purple)',
             padding: '16px 20px',
             borderRadius: '16px',
             margin: '0 20px 30px',
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
             maxWidth: '500px',
             width: 'calc(100% - 40px)',
             position: 'relative'
@@ -100,7 +101,7 @@ export const PWAInstallPrompt: React.FC = () => {
                 <button
                     onClick={handleInstallClick}
                     style={{
-                        background: '#fff', color: 'var(--color-primary)',
+                        background: 'var(--color-primary)', color: 'var(--night-300)',
                         border: 'none', padding: '12px', borderRadius: '12px',
                         fontWeight: 800, fontSize: '15px', cursor: 'pointer',
                         marginTop: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'

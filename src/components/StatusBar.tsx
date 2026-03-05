@@ -11,47 +11,49 @@ export const StatusBar: React.FC<StatusBarProps> = ({ level, xp, xpMax, credits 
   const fillPercentage = Math.min((xp / xpMax) * 100, 100);
 
   return (
-    <div className="neo-box mb-4 p-3 flex-col gap-2" style={{ padding: 'var(--space-3)' }}>
-      
-      <div className="flex justify-between items-center mb-1">
-        <h2 style={{ margin: 0 }}>Nível {level}</h2>
-        <span style={{ fontWeight: 800, fontSize: 'var(--font-size-lg)' }}>💰 {credits} FC</span>
+    <div style={{
+      background: 'linear-gradient(135deg, var(--color-surface), var(--color-surface-alt))',
+      border: 'var(--border-width) solid var(--color-border)',
+      borderRadius: 'var(--border-radius)',
+      padding: 'var(--space-3)',
+      boxShadow: 'var(--shadow-card)',
+      marginBottom: 'var(--space-2)',
+    }}>
+      <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-1)' }}>
+        <div className="flex items-center gap-1">
+          <span className="level-badge">Nv {level}</span>
+          <span style={{
+            fontSize: 'var(--font-size-xs)',
+            color: 'var(--color-text-muted)',
+            fontWeight: 'var(--font-weight-semibold)',
+            marginLeft: 'var(--space-sm)',
+          }}>
+            {xp} / {xpMax} XP
+          </span>
+        </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-sm)',
+          background: 'var(--color-overlay-gold)',
+          border: 'var(--border-width) solid var(--color-border-gold)',
+          borderRadius: 'var(--border-radius-pill)',
+          padding: '4px 12px',
+          boxShadow: 'var(--glow-gold)',
+        }}>
+          <span>🪙</span>
+          <span style={{
+            fontWeight: 'var(--font-weight-black)',
+            fontSize: 'var(--font-size-base)',
+            color: 'var(--color-primary-light)',
+          }}>
+            {credits} FC
+          </span>
+        </div>
       </div>
-
-      <div 
-        style={{ 
-          height: '24px', 
-          border: 'var(--border-width) solid var(--color-border)', 
-          borderRadius: '4px',
-          overflow: 'hidden',
-          backgroundColor: 'var(--color-bg)',
-          position: 'relative'
-        }}
-      >
-        <div 
-          style={{
-            height: '100%',
-            width: `${fillPercentage}%`,
-            backgroundColor: 'var(--color-primary)',
-            borderRight: fillPercentage > 0 && fillPercentage < 100 ? 'var(--border-width) solid var(--color-border)' : 'none',
-            transition: 'width 0.3s ease-out'
-          }}
-        />
-        <span 
-          style={{ 
-            position: 'absolute', 
-            top: 0, 
-            left: '50%', 
-            transform: 'translateX(-50%)', 
-            fontWeight: 800,
-            lineHeight: '20px',
-            fontSize: 'var(--font-size-sm)'
-          }}
-        >
-          {xp} / {xpMax} XP
-        </span>
+      <div className="xp-bar-track">
+        <div className="xp-bar-fill" style={{ width: `${fillPercentage}%` }} />
       </div>
-      
     </div>
   );
 };

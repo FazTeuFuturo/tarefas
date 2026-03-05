@@ -97,12 +97,12 @@ export const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                             {customAvatarUrl ? (
                                 <img
                                     src={customAvatarUrl}
-                                    style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid #000', objectFit: 'cover' }}
+                                    style={{ width: 64, height: 64, borderRadius: '50%', border: 'var(--border-width-thick) solid var(--color-border)', objectFit: 'cover' }}
                                     alt="Custom Avatar"
                                 />
                             ) : (
                                 <div style={{
-                                    width: 64, height: 64, borderRadius: '50%', border: '3px solid #000',
+                                    width: 64, height: 64, borderRadius: '50%', border: 'var(--border-width-thick) solid var(--color-border)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     fontSize: 32, background: 'var(--color-primary-light)'
                                 }}>
@@ -126,7 +126,7 @@ export const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                                         }
                                     }}
                                 />
-                                <label htmlFor="hero-photo-settings" className="neo-button" style={{ fontSize: 12, padding: '8px 12px', background: '#fff', width: '100%' }}>
+                                <label htmlFor="hero-photo-settings" className="neo-button" style={{ fontSize: 12, padding: '8px 12px', background: 'var(--color-surface-alt)', width: '100%' }}>
                                     {uploadingImage ? '⬆️ Enviando...' : '📷 Alterar Foto'}
                                 </label>
                                 {customAvatarUrl && (
@@ -147,10 +147,10 @@ export const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                                         onClick={() => setAvatar(a)}
                                         style={{
                                             fontSize: 24, padding: 6, cursor: 'pointer',
-                                            border: avatar === a ? '3px solid #000' : '2px solid #ddd',
+                                            border: avatar === a ? 'var(--border-width-thick) solid var(--color-border)' : 'var(--border-width) solid var(--color-border-subtle)',
                                             borderRadius: 8,
-                                            background: avatar === a ? 'var(--color-primary)' : '#fff',
-                                            boxShadow: avatar === a ? '2px 2px 0 #000' : 'none',
+                                            background: avatar === a ? 'var(--color-primary)' : 'var(--color-surface)',
+                                            boxShadow: avatar === a ? 'var(--neo-shadow)' : 'none',
                                             transition: 'all 0.1s'
                                         }}
                                     >{a}</button>
@@ -159,7 +159,7 @@ export const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                         )}
                     </div>
 
-                    <div style={{ height: '1px', background: '#ddd', margin: '10px 0' }}></div>
+                    <div style={{ height: '1px', background: 'var(--color-border)', margin: '10px 0' }}></div>
 
                     <div className="flex-col gap-1">
                         <label className="neo-label">Mudar PIN Secreto</label>
@@ -184,7 +184,7 @@ export const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                         type="submit"
                         disabled={isSaving || uploadingImage}
                         className="neo-button w-full"
-                        style={{ background: isSaving ? '#999' : 'var(--color-success)', color: 'white', padding: 'var(--space-2)', marginTop: 10 }}
+                        style={{ background: isSaving ? 'var(--color-text-muted)' : 'var(--color-success)', color: 'white', padding: 'var(--space-2)', marginTop: 10 }}
                     >
                         {isSaving ? '⏳ Salvando...' : '✅ Salvar Alterações'}
                     </button>

@@ -150,12 +150,11 @@ export const QuestCard: React.FC<QuestCardProps> = ({
     return (
         <>
             <div
-                className="neo-box"
+                className="quest-card"
                 style={{
                     padding: 'var(--space-3)',
                     position: 'relative',
                     borderLeft: `6px solid ${quest.is_recurring ? 'var(--color-warning)' : stateColor}`,
-                    background: quest.is_recurring ? 'rgba(255, 230, 100, 0.05)' : 'white',
                     marginBottom: 'var(--space-3)',
                     transition: 'border-color 0.3s',
                 }}
@@ -263,23 +262,27 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                 {quest.descricao}
                             </p>
                         )}
-                        <div className="flex gap-2 items-center" style={{ marginTop: 'var(--space-1)', opacity: 0.9 }}>
-                            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-secondary)' }}>★ {quest.xp_reward} XP</span>
-                            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-primary-dark)' }}>💰 {quest.fc_reward} FC</span>
-                            <span style={{ fontSize: '10px', background: '#eee', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>👤 {assigneeName || 'Todos'}</span>
+                        <div className="flex gap-2 items-center" style={{ marginTop: 'var(--space-1)' }}>
+                            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-tertiary)' }}>★ {quest.xp_reward} XP</span>
+                            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary-dark)' }}>🪙 {quest.fc_reward} FC</span>
+                            <span style={{ fontSize: 'var(--font-size-xs)', background: 'var(--color-overlay-light)', border: '1px solid var(--color-border-subtle)', padding: '2px 6px', borderRadius: 'var(--border-radius-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-parchment-text)' }}>👤 {assigneeName || 'Todos'}</span>
                         </div>
                     </div>
 
                     <div className="flex-col items-center gap-2" style={{ minWidth: 90, textAlign: 'center' }}>
                         {quest.status === 'pending' ? (
                             <div className="flex-col gap-2 w-full">
-                                <div className="neo-box" style={{
-                                    background: 'var(--color-warning)',
+                                <div style={{
+                                    background: 'linear-gradient(135deg, var(--amber-300), var(--amber-500))',
+                                    border: 'var(--border-width) solid var(--amber-700)',
+                                    borderRadius: 'var(--border-radius-sm)',
                                     padding: 'var(--space-2)',
                                     fontSize: 'var(--font-size-sm)',
-                                    fontWeight: 800,
+                                    fontWeight: 'var(--font-weight-bold)',
                                     textAlign: 'center',
-                                    minWidth: 120
+                                    minWidth: 120,
+                                    color: 'var(--night-300)',
+                                    boxShadow: '0 0 10px rgba(245, 158, 11, 0.3)',
                                 }}>
                                     ⏳ EM VALIDAÇÃO
                                 </div>
@@ -304,13 +307,13 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                         ) : (
                             <>
                                 {!hasTimer && (
-                                    <button className="neo-button" onClick={handleFinish} style={{ width: '100%', background: 'var(--color-success)' }}>
+                                    <button className="neo-button neo-button--success w-full" onClick={handleFinish}>
                                         ✅ CONCLUIR
                                     </button>
                                 )}
 
                                 {hasTimer && questState === 'idle' && (
-                                    <button className="neo-button" onClick={handleStart} style={{ width: '100%' }}>
+                                    <button className="neo-button w-full" onClick={handleStart}>
                                         ▶ INICIAR
                                     </button>
                                 )}
@@ -318,22 +321,23 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                 {hasTimer && questState === 'running' && (
                                     <>
                                         <div style={{
-                                            fontFamily: 'monospace',
+                                            fontFamily: 'var(--font-family-mono)',
                                             fontSize: 'var(--font-size-xl)',
-                                            fontWeight: 800,
+                                            fontWeight: 'var(--font-weight-black)',
                                             color: timeLeft < 30 ? 'var(--color-danger)' : 'var(--color-secondary)',
                                             animation: timeLeft < 10 ? 'pulse 1s infinite' : 'none',
+                                            textShadow: timeLeft < 30 ? 'var(--glow-danger)' : 'var(--glow-green)',
                                         }}>
                                             {formatTime(timeLeft)}
                                         </div>
                                         <div className="flex gap-2 w-full">
-                                            <button className="neo-button" onClick={handlePause} style={{ flex: 1, padding: '4px', fontSize: '12px' }}>
+                                            <button className="neo-button neo-button--ghost" onClick={handlePause} style={{ flex: 1, padding: '4px', fontSize: 'var(--font-size-xs)' }}>
                                                 ⏸ PAUSAR
                                             </button>
                                             <button
-                                                className="neo-button"
+                                                className="neo-button neo-button--success"
                                                 onClick={handleFinish}
-                                                style={{ flex: 1, padding: '4px', fontSize: '10px', background: 'var(--color-success)' }}
+                                                style={{ flex: 1, padding: '4px', fontSize: 'var(--font-size-xs)' }}
                                             >
                                                 ✓ FINALIZAR
                                             </button>
@@ -344,15 +348,15 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                 {hasTimer && questState === 'paused' && (
                                     <>
                                         <div style={{
-                                            fontFamily: 'monospace',
+                                            fontFamily: 'var(--font-family-mono)',
                                             fontSize: 'var(--font-size-xl)',
-                                            fontWeight: 800,
+                                            fontWeight: 'var(--font-weight-black)',
                                             color: 'var(--color-warning)',
-                                            opacity: 0.7
+                                            opacity: 0.8,
                                         }}>
                                             {formatTime(timeLeft)}
                                         </div>
-                                        <button className="neo-button" onClick={handleResume} style={{ width: '100%', background: 'var(--color-warning)' }}>
+                                        <button className="neo-button w-full" onClick={handleResume} style={{ background: 'linear-gradient(180deg, var(--amber-300), var(--amber-500))', borderColor: 'var(--amber-700)', color: 'var(--night-300)' }}>
                                             ▶ RETOMAR
                                         </button>
                                     </>
@@ -360,9 +364,8 @@ export const QuestCard: React.FC<QuestCardProps> = ({
 
                                 {hasTimer && questState === 'done' && (
                                     <button
-                                        className="neo-button"
+                                        className="neo-button neo-button--success w-full"
                                         onClick={handleFinish}
-                                        style={{ width: '100%', background: 'var(--color-success)' }}
                                     >
                                         ✅ FEITO!
                                     </button>
@@ -374,20 +377,15 @@ export const QuestCard: React.FC<QuestCardProps> = ({
 
                 {/* Timer Progress Bar */}
                 {hasTimer && questState !== 'idle' && (
-                    <div style={{
-                        marginTop: 'var(--space-2)',
-                        height: 8,
-                        background: '#eee',
-                        border: '2px solid var(--color-border)',
-                        borderRadius: 0,
-                        overflow: 'hidden',
-                    }}>
-                        <div style={{
-                            width: `${progress}%`,
-                            height: '100%',
-                            background: questState === 'done' ? 'var(--color-success)' : stateColor,
-                            transition: 'width 1s linear, background 0.3s',
-                        }} />
+                    <div className="xp-bar-track" style={{ marginTop: 'var(--space-2)', height: 8, borderRadius: 'var(--border-radius-sm)' }}>
+                        <div
+                            className="xp-bar-fill"
+                            style={{
+                                width: `${progress}%`,
+                                background: questState === 'done' ? 'var(--color-success)' : stateColor,
+                                transition: 'width 1s linear, background 0.3s',
+                            }}
+                        />
                     </div>
                 )}
 

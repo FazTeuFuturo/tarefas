@@ -36,7 +36,7 @@ export const ProfilePicker: React.FC = () => {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--color-background)' }}>
                 <div style={{ fontSize: 48 }}>⚔️</div>
             </div>
         );
@@ -58,14 +58,14 @@ export const ProfilePicker: React.FC = () => {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#1a1a1a',
+            background: 'var(--color-background)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '20px'
         }}>
-            <h1 style={{ color: '#fff', fontSize: '2rem', marginBottom: '20px', fontWeight: 800 }}>Quem está jogando?</h1>
+            <h1 style={{ color: 'var(--color-primary-light)', fontSize: '2rem', marginBottom: '20px', fontWeight: 800, fontFamily: 'var(--font-family-heading)', textShadow: '0 0 14px rgba(245,166,35,0.5)' }}>Quem está jogando?</h1>
 
             <PWAInstallPrompt />
 
@@ -107,7 +107,7 @@ export const ProfilePicker: React.FC = () => {
                                 return <span style={{ fontSize: '4rem' }}>{emoji}</span>;
                             })()}
                         </div>
-                        <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 600 }}>
+                        <span style={{ color: 'var(--color-text)', fontSize: '1.2rem', fontWeight: 600 }}>
                             {p.nome}
                         </span>
                     </div>

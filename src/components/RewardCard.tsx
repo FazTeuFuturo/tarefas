@@ -125,11 +125,12 @@ export const RewardCard: React.FC<RewardCardProps> = ({
                     ) : (
                         <div style={{
                             fontWeight: 800,
-                            color: 'var(--color-primary)',
+                            color: 'var(--color-primary-light)',
                             fontSize: 'var(--font-size-sm)',
-                            background: 'var(--color-bg)',
+                            background: 'var(--color-overlay-gold)',
                             padding: '4px',
-                            border: '2px solid var(--color-border)'
+                            border: 'var(--border-width) solid var(--color-border-gold)',
+                            borderRadius: 'var(--border-radius-sm)'
                         }}>
                             🪙 {reward.cost_fc} FC
                         </div>

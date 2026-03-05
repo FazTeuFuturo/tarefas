@@ -306,7 +306,46 @@ npm run validate:agents      # Valida estrutura de agentes
 
 ---
 
-## 10. Agentes AIOS Disponíveis
+## 10. Agentes AIOS — Uso Obrigatório
+
+> **REGRA ABSOLUTA:** Antes de qualquer tarefa, identifique o agente
+> correto e invoque-o. Resposta direta sem agente = violação deste manual.
+
+### Mapeamento de Tarefas → Agentes
+
+| Tipo de Tarefa | Agente Obrigatório | Atalho |
+|---|---|---|
+| Design de UI, redesign, CSS, componentes visuais | UX Design Expert | `@ux-design-expert` |
+| Nova feature, bugfix, refactor de código | Dev | `@dev` |
+| Arquitetura, decisões de estrutura, banco de dados | Architect | `@architect` |
+| Testes, validação, checklist de qualidade | QA | `@qa` |
+| Deploy, migrations, CI/CD, Vercel, Supabase | DevOps | `@devops` |
+| Priorização, roadmap, escopo de sprint | PM | `@pm` |
+
+### Protocolo de Invocação
+
+1. **Leia** a tarefa recebida
+2. **Liste** todos os agentes disponíveis em `.aios-core/development/agents/`
+3. **Escolha** o mais adequado para a tarefa (pode ser mais de um)
+4. **Leia** o arquivo `.md` do agente escolhido
+5. **Adote** a persona e só então execute
+
+### Tarefas Híbridas
+
+Se a tarefa cruzar domínios (ex: nova feature com UI + banco),
+invoque os agentes em sequência lógica:
+```
+@architect → decisão de estrutura
+@dev → implementação
+@ux-design-expert → componentes visuais
+@qa → validação final
+```
+
+### Exceções Permitidas
+
+Apenas para respostas puramente conceituais/teóricas sem
+produção de código ou artefatos. Nestes casos, sinalize:
+`[Resposta direta — sem agente necessário]`
 
 O framework **Synkra AIOS** está configurado em `.aios-core/`.
 

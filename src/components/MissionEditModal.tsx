@@ -134,9 +134,9 @@ export const MissionEditModal: React.FC<MissionEditModalProps> = ({
                 <div className="flex gap-3" style={{ marginTop: 'var(--space-2)' }}>
                     <button
                         type="button"
-                        className="neo-button"
+                        className="neo-button neo-button--ghost"
                         onClick={onClose}
-                        style={{ flex: 1, background: '#e5e7eb' }}
+                        style={{ flex: 1 }}
                     >
                         Cancelar
                     </button>

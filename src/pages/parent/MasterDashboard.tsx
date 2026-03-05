@@ -146,32 +146,24 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
             {/* HEADER */}
             <header style={{
                 padding: 'var(--space-3) var(--space-2)',
-                background: 'var(--color-primary)',
-                borderBottom: '3px solid #000',
+                background: 'linear-gradient(135deg, var(--night-200), var(--night-100))',
+                borderBottom: 'var(--border-width) solid var(--color-border-gold)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between'
             }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>⚔️ Quartel General</h1>
-                    <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)', opacity: 0.7 }}>
+                    <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', textShadow: '0 0 12px rgba(245,166,35,0.5)' }}>🧙‍♂️ Quartel General</h1>
+                    <p style={{ margin: 0, fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
                         Mestre {profile.nome}
                     </p>
                 </div>
                 <button
                     onClick={clearActiveProfile}
-                    className="neo-button"
-                    style={{
-                        padding: '8px',
-                        background: 'var(--color-danger)',
-                        color: 'white',
-                        width: '40px',
-                        height: '40px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
+                    className="neo-button neo-button--danger"
+                    style={{ padding: '8px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     title="Sair"
                 >
-                    <span style={{ fontSize: 18, fontWeight: 900 }}>X</span>
+                    <span style={{ fontSize: 18, fontWeight: 'var(--font-weight-black)' }}>✕</span>
                 </button>
             </header>
 
@@ -185,50 +177,43 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         <StatusBar level={profile.nivel} xp={profile.xp} xpMax={profile.nivel * 100 + 500} credits={profile.fc_balance} />
 
                         {/* Mural de Performance */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 12, background: '#f8fafc' }}>
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 12 }}>
                             <span style={{ fontSize: 32 }}>📈</span>
                             <div>
-                                <p style={{ margin: 0, fontWeight: 800 }}>Mural de Performance</p>
-                                <p style={{ margin: 0, fontSize: 13, opacity: 0.6 }}>Em breve: Estatísticas detalhadas do clã.</p>
+                                <p style={{ margin: 0, fontWeight: 'var(--font-weight-bold)', fontFamily: 'var(--font-family-heading)', fontSize: 'var(--font-size-sm)' }}>Mural de Performance</p>
+                                <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Em breve: Estatísticas detalhadas do clã.</p>
                             </div>
                         </div>
 
-                        {/* 💎 BANNER DE UPGRADE (Padronizado) */}
+                        {/* 💎 BANNER DE UPGRADE */}
                         {isPrimaryParent && currentPlan === 'free' && (
                             <div className="neo-box" style={{
                                 padding: 'var(--space-3)',
-                                background: 'var(--color-tertiary-light)',
-                                border: '3px solid var(--color-tertiary)',
+                                background: 'linear-gradient(135deg, var(--purple-700), var(--purple-900))',
+                                border: 'var(--border-width-thick) solid var(--color-tertiary-light)',
+                                boxShadow: 'var(--neo-shadow), var(--glow-purple)',
                                 marginBottom: 'var(--space-2)'
                             }}>
-                                <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 13, textTransform: 'uppercase', opacity: 0.6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', color: 'var(--purple-300)', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <span>💎</span> ASSINATURA PREMIUM
                                 </h3>
                                 <div className="flex items-center justify-between mb-3">
                                     <div style={{ flex: 1 }}>
-                                        <p style={{ margin: '0 0 4px', fontWeight: 800, fontSize: 16 }}>Plano Clã Lendário</p>
+                                        <p style={{ margin: '0 0 4px', fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>Plano Clã Lendário</p>
                                         <div className="flex flex-col gap-1">
-                                            <p style={{ margin: 0, fontSize: 12, opacity: 0.8, fontWeight: 700 }}>✅ 3 Heróis + 2 Mestres</p>
-                                            <p style={{ margin: 0, fontSize: 12, opacity: 0.8, fontWeight: 700 }}>✅ Missões Infinitas + Recorrentes</p>
+                                            <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>✅ 3 Heróis + 2 Mestres</p>
+                                            <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>✅ Missões simples e recorrentes infinitas</p>
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <p style={{ margin: 0, fontWeight: 900, fontSize: 20, color: '#000' }}>R$ 9,90</p>
-                                        <p style={{ margin: 0, fontSize: 10, fontWeight: 800, opacity: 0.6, textTransform: 'uppercase' }}>Por Mês</p>
+                                        <p style={{ margin: 0, fontWeight: 'var(--font-weight-black)', fontSize: 'var(--font-size-lg)', color: 'var(--color-primary-light)' }}>R$ 9,90</p>
+                                        <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Por Mês</p>
                                     </div>
                                 </div>
-
                                 <button
                                     onClick={handleStripeUpgrade}
                                     disabled={isRedirectingStripe}
                                     className="neo-button w-full"
-                                    style={{
-                                        background: '#facc15',
-                                        color: '#000',
-                                        fontSize: '13px',
-                                        padding: '12px',
-                                        fontWeight: 900
-                                    }}
                                 >
                                     {isRedirectingStripe ? 'CARREGANDO...' : 'ASSINAR AGORA (MENSAL) ➜'}
                                 </button>
@@ -241,36 +226,28 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 {view === 'missions' && (
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease', paddingBottom: 80 }}>
                         <div className="flex items-center justify-between">
-                            <h2 style={{ margin: 0 }}>📋 Missões do Clã</h2>
+                            <h2 style={{ margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', fontSize: 'var(--font-size-lg)' }}>📜 Missões do Clã</h2>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setStatusFilter('active')}
-                                    className="neo-button"
-                                    style={{
-                                        padding: '4px 12px', fontSize: 11,
-                                        background: statusFilter === 'active' ? 'var(--color-secondary)' : '#eee'
-                                    }}
+                                    className={`filter-chip${statusFilter === 'active' ? ' active' : ''}`}
+                                    style={{ padding: '4px 12px' }}
                                 >
                                     ATIVAS
                                 </button>
                                 <button
                                     onClick={() => setStatusFilter('pending')}
-                                    className="neo-button"
-                                    style={{
-                                        padding: '4px 12px', fontSize: 11,
-                                        background: statusFilter === 'pending' ? 'var(--color-danger)' : '#eee',
-                                        color: statusFilter === 'pending' ? '#fff' : '#000',
-                                        position: 'relative'
-                                    }}
+                                    className={`filter-chip${statusFilter === 'pending' ? ' active' : ''}`}
+                                    style={{ padding: '4px 12px', position: 'relative', ...(statusFilter === 'pending' ? { background: 'var(--color-danger)', borderColor: 'var(--crimson-700)' } : {}) }}
                                 >
                                     PENDENTES
                                     {pendingCount > 0 && (
                                         <span style={{
                                             position: 'absolute', top: -8, right: -8,
-                                            background: '#000', color: '#fff',
+                                            background: 'var(--color-danger)', color: '#fff',
                                             borderRadius: '50%', width: 18, height: 18,
-                                            fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            border: '2px solid #fff'
+                                            fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            border: 'var(--border-width) solid var(--color-border)', fontWeight: 'var(--font-weight-bold)'
                                         }}>{pendingCount}</span>
                                     )}
                                 </button>
@@ -283,14 +260,8 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 <button
                                     key={m.id}
                                     onClick={() => setFilterMember(m.id)}
-                                    style={{
-                                        flexShrink: 0,
-                                        padding: '6px 14px', fontWeight: 800, fontSize: 13,
-                                        border: '2px solid #000', borderRadius: 99, cursor: 'pointer',
-                                        background: filterMember === m.id ? '#000' : '#fff',
-                                        color: filterMember === m.id ? '#fff' : '#000',
-                                        transition: 'all 0.1s'
-                                    }}
+                                    className={`filter-chip${filterMember === m.id ? ' active' : ''}`}
+                                    style={{ flexShrink: 0 }}
                                 >
                                     {m.nome === 'Todo o Clã' ? 'Todos' : m.nome}
                                 </button>
@@ -327,7 +298,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 {/* ────── 🍺 TAVERNA ────── */}
                 {view === 'tavern' && (
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
-                        <h2 style={{ margin: 0 }}>🍺 Gerenciar Taverna</h2>
+                        <h2 style={{ margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>🍺 Gerenciar Taverna</h2>
 
                         {/* Criar prêmio */}
                         <div className="neo-box" style={{ padding: 'var(--space-3)' }}>
@@ -372,7 +343,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         </div>
 
                         {/* ─── Dar Bônus Avulso ─── */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: '#EFF6FF' }}>
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-surface-alt)', borderColor: 'var(--color-border)' }}>
                             <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-2)' }}>
                                 <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>💰 Dar Bônus Avulso</h3>
                                 <button
@@ -424,7 +395,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
 
                         {/* Últimos resgates */}
                         {redemptions.length > 0 && (
-                            <div className="neo-box" style={{ padding: 'var(--space-3)', background: '#FEF3C7' }}>
+                            <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-surface)', borderColor: 'var(--color-border-gold)' }}>
                                 <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🛒 Últimos Resgates</h3>
                                 {redemptions.slice(0, 8).map(r => (
                                     <div key={r.id} className="flex justify-between items-center" style={{ padding: '6px 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
@@ -445,51 +416,50 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 {view === 'clan' && (
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
                         <div className="flex items-center justify-between">
-                            <h2 style={{ margin: 0 }}>🏆 Clã</h2>
+                            <h2 style={{ margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>🏆 Clã</h2>
                             <span style={{ fontWeight: 800, fontSize: 12, opacity: 0.6 }}>{leaderboard.length} Membros</span>
                         </div>
 
                         {/* Ranking da Família */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-primary)' }}>
-                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'linear-gradient(135deg, var(--color-surface), var(--color-surface-alt))', borderColor: 'var(--color-border-gold)' }}>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>
                                 🎖️ Ranking da Família
                             </h3>
                             <div className="flex-col gap-2">
                                 {leaderboard.map((member, idx) => (
                                     <div key={member.id} className="neo-box flex items-center gap-3"
-                                        style={{ padding: 'var(--space-2)', background: '#fff' }}>
-                                        <span style={{ fontWeight: 800, fontSize: idx === 0 ? 26 : 20, width: 34, textAlign: 'center', flexShrink: 0 }}>
+                                        style={{ padding: 'var(--space-2)', background: 'var(--color-surface)' }}>
+                                        <span style={{ fontWeight: 'var(--font-weight-bold)', fontSize: idx === 0 ? 26 : 20, width: 34, textAlign: 'center', flexShrink: 0 }}>
                                             {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
                                         </span>
                                         <img
                                             src={/^https?:\/\//.test(member.avatar || '') ? member.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.nome}`}
-                                            style={{ width: 38, height: 38, borderRadius: '50%', border: '3px solid #000', flexShrink: 0, objectFit: 'cover' }}
+                                            style={{ width: 38, height: 38, borderRadius: '50%', border: 'var(--border-width-thick) solid var(--color-border)', flexShrink: 0, objectFit: 'cover' }}
                                             alt={member.nome}
                                             onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.nome}`; }}
                                         />
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div className="flex items-center gap-2">
-                                                <strong style={{ fontSize: 13 }}>{member.nome}</strong>
+                                                <strong style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text)' }}>{member.nome}</strong>
                                                 {member.id === profile.id && (
                                                     <span style={{
                                                         fontSize: 9,
-                                                        fontWeight: 900,
-                                                        background: '#000',
-                                                        color: '#fff',
+                                                        fontWeight: 'var(--font-weight-black)',
+                                                        background: 'var(--color-primary)',
+                                                        color: 'var(--night-300)',
                                                         padding: '1px 5px',
-                                                        borderRadius: 3,
+                                                        borderRadius: 'var(--border-radius-sm)',
                                                         letterSpacing: '0.5px'
                                                     }}>VOCÊ</span>
                                                 )}
                                             </div>
                                             <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
-                                                <span style={{ fontSize: 11, fontWeight: 700 }}>Nv {member.nivel}</span>
-                                                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-tertiary)' }}>⭐ {member.xp} XP</span>
-                                                <span style={{ fontSize: 11, fontWeight: 700 }}>🪙 {member.fc_balance} FC</span>
+                                                <span className="level-badge" style={{ fontSize: 9, padding: '1px 6px' }}>Nv {member.nivel}</span>
+                                                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-tertiary-light)' }}>⭐ {member.xp} XP</span>
+                                                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-primary-light)' }}>🪙 {member.fc_balance} FC</span>
                                             </div>
-                                            {/* XP progress bar */}
-                                            <div style={{ marginTop: 4, height: 5, background: 'rgba(0,0,0,0.1)', borderRadius: 3, border: '1px solid rgba(0,0,0,0.15)', overflow: 'hidden' }}>
-                                                <div style={{ height: '100%', background: 'var(--color-tertiary)', width: `${Math.min(100, (member.xp / (member.nivel * 100 + 500)) * 100)}%`, borderRadius: 3 }} />
+                                            <div className="xp-bar-track" style={{ marginTop: 4, height: 5, borderRadius: 'var(--border-radius-sm)' }}>
+                                                <div className="xp-bar-fill" style={{ width: `${Math.min(100, (member.xp / (member.nivel * 100 + 500)) * 100)}%` }} />
                                             </div>
                                         </div>
                                     </div>
@@ -499,12 +469,12 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
 
                         {/* Heróis — grid de cards */}
                         <div>
-                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>⚔️ Heróis do Clã</h3>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>⚔️ Heróis do Clã</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
 
                                 {/* Cards dos heróis existentes */}
                                 {leaderboard.filter(m => m.role === 'child').map(hero => (
-                                    <div key={hero.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, background: '#fff' }}>
+                                    <div key={hero.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--color-surface)' }}>
                                         {/* Botão Remover Herói */}
                                         {isPrimaryParent && (
                                             <button
@@ -562,17 +532,17 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         <button
                                             onClick={() => setIsHeroCreateOpen(true)}
                                             style={{
-                                                border: '3px dashed #bbb',
+                                                border: '3px dashed var(--color-border)',
                                                 borderRadius: 12, background: 'transparent',
                                                 cursor: 'pointer', padding: 'var(--space-3)',
                                                 display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
                                                 gap: 8, minHeight: 160,
                                                 transition: 'border-color 0.15s, background 0.15s',
-                                                color: '#888',
+                                                color: 'var(--color-text-muted)',
                                             }}
-                                            onMouseEnter={e => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.background = '#f9f9f9'; }}
-                                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#bbb'; e.currentTarget.style.background = 'transparent'; }}
+                                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.background = 'var(--color-surface)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.background = 'transparent'; }}
                                         >
                                             <span style={{ fontSize: 32, display: 'block' }}>＋</span>
                                             <span style={{ fontSize: 13, fontWeight: 800 }}>Novo Herói</span>
@@ -600,11 +570,11 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
 
                         {/* Seção de Mestres / Co-parentalidade */}
                         <div style={{ marginTop: 'var(--space-2)' }}>
-                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🧙‍♂️ Mestres</h3>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-text-muted)' }}>🧙‍♂️ Mestres</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                                 {/* Perfil do Mestre Atual */}
                                 {leaderboard.filter(m => m.role === 'parent').map(master => (
-                                    <div key={master.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', opacity: 0.9, textAlign: 'center', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div key={master.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', opacity: 0.9, textAlign: 'center', background: 'var(--color-surface)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                         {master.id !== profile.id && isPrimaryParent && (
                                             <button
                                                 onClick={(e) => {
@@ -663,7 +633,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                                 gap: 6, transition: 'all 0.2s',
                                                 minHeight: 120
                                             }}
-                                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.borderColor = '#000'; }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.borderColor = 'var(--color-border)'; }}
                                             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
                                         >
                                             <span style={{ fontSize: 24, display: 'block' }}>🤝</span>
@@ -673,13 +643,13 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         <button
                                             onClick={handleStripeUpgrade}
                                             style={{
-                                                border: '3px dashed #bbb',
-                                                borderRadius: 12, background: '#f5f5f5',
+                                                border: '3px dashed var(--color-border)',
+                                                borderRadius: 12, background: 'var(--color-surface-alt)',
                                                 cursor: 'pointer', padding: 'var(--space-3)',
                                                 display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
                                                 gap: 6, minHeight: 120,
-                                                color: '#888',
+                                                color: 'var(--color-text-muted)',
                                                 opacity: 0.8
                                             }}
                                         >
@@ -697,11 +667,11 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
             {/* ────── BOTTOM NAV ────── */}
             <nav className="bottom-nav">
                 <button className={`nav-item ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>
-                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>🏠</span>
+                    <span className="nav-icon">🏠</span>
                     Início
                 </button>
                 <button className={`nav-item ${view === 'missions' ? 'active' : ''}`} onClick={() => setView('missions')} style={{ position: 'relative' }}>
-                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>📋</span>
+                    <span className="nav-icon">📜</span>
                     Missões
                     {pendingCount > 0 && (
                         <span style={{
@@ -709,16 +679,16 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                             background: 'var(--color-danger)', color: '#fff',
                             borderRadius: '50%', width: 17, height: 17,
                             fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            border: '2px solid #fff', fontWeight: 800
+                            border: 'var(--border-width) solid var(--color-border)', fontWeight: 'var(--font-weight-bold)'
                         }}>{pendingCount}</span>
                     )}
                 </button>
                 <button className={`nav-item ${view === 'tavern' ? 'active' : ''}`} onClick={() => setView('tavern')}>
-                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>🍺</span>
+                    <span className="nav-icon">🏰</span>
                     Taverna
                 </button>
                 <button className={`nav-item ${view === 'clan' ? 'active' : ''}`} onClick={() => setView('clan')}>
-                    <span style={{ fontSize: '1.4rem', marginBottom: '3px' }}>🏆</span>
+                    <span className="nav-icon">🛡️</span>
                     Clã
                 </button>
             </nav>
@@ -738,13 +708,14 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         bottom: 86,
                         right: 'max(16px, calc(50vw - 224px))',
                         width: 54, height: 54,
-                        background: 'var(--color-primary)',
-                        border: '3px solid #000',
+                        background: 'linear-gradient(180deg, var(--gold-300), var(--gold-500))',
+                        border: 'var(--border-width) solid var(--color-border)',
                         borderRadius: '50%',
-                        boxShadow: '4px 4px 0 #000',
+                        boxShadow: 'var(--neo-shadow), var(--glow-gold)',
                         fontSize: 26, cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         zIndex: 1500,
+                        color: 'var(--night-300)',
                     }}
                     title="Nova Missão"
                 >＋</button>
@@ -817,7 +788,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                     setIsEditMasterOpen(false);
                 }} className="flex-col gap-3">
 
-                    <div style={{ padding: 'var(--space-3)', background: '#F8FAFC', borderRadius: 12, border: '2px solid #E2E8F0' }}>
+                    <div style={{ padding: 'var(--space-3)', background: 'var(--color-surface)', borderRadius: 12, border: 'var(--border-width) solid var(--color-border)' }}>
                         <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 14, textTransform: 'uppercase', opacity: 0.6 }}>👤 Perfil</h3>
                         <div className="flex-col gap-3">
                             <div className="flex-col gap-1">
@@ -859,7 +830,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         <label
                                             htmlFor="master-photo-upload"
                                             className="neo-button"
-                                            style={{ fontSize: 12, padding: '8px 12px', background: '#fff', width: '100%' }}
+                                            style={{ fontSize: 12, padding: '8px 12px', background: 'var(--color-surface-alt)', width: '100%' }}
                                         >
                                             {uploadingImage ? '⬆️ Enviando...' : '📷 Alterar Foto'}
                                         </label>
@@ -877,40 +848,47 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         </div>
                     </div>
 
-                    <div style={{ padding: 'var(--space-3)', background: 'var(--color-primary-light)', borderRadius: 12, border: '2px solid var(--color-primary)' }}>
-                        <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 14, textTransform: 'uppercase', opacity: 0.6 }}>💎 Assinatura</h3>
+                    <div style={{
+                        padding: 'var(--space-3)',
+                        background: 'linear-gradient(135deg, var(--purple-700), var(--purple-900))',
+                        borderRadius: 12,
+                        border: 'var(--border-width) solid var(--color-tertiary-light)',
+                        boxShadow: 'var(--glow-purple)'
+                    }}>
+                        <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--purple-300)', fontWeight: 800 }}>💎 Assinatura</h3>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p style={{ margin: 0, fontWeight: 800 }}>{currentPlan === 'premium' ? 'Plano Clã Lendário' : 'Plano Aprendiz (Grátis)'}</p>
-                                <p style={{ margin: 0, fontSize: 11, opacity: 0.7 }}>
+                                <p style={{ margin: 0, fontWeight: 800, color: 'var(--color-primary-light)', fontFamily: 'var(--font-family-heading)' }}>{currentPlan === 'premium' ? 'Plano Clã Lendário' : 'Plano Aprendiz (Grátis)'}</p>
+                                <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-muted)' }}>
                                     {currentPlan === 'premium' ? 'Até 3 heróis e 2 mestres' : 'Até 1 herói e 1 mestre'}
                                 </p>
                             </div>
                             <span style={{
-                                background: currentPlan === 'premium' ? 'var(--color-tertiary)' : '#000',
-                                color: currentPlan === 'premium' ? '#000' : '#fff',
+                                background: currentPlan === 'premium' ? 'var(--color-primary)' : 'var(--color-surface)',
+                                color: currentPlan === 'premium' ? 'var(--night-300)' : 'var(--color-text-muted)',
                                 fontSize: 10, fontWeight: 800, padding: '4px 8px',
-                                borderRadius: 6, textTransform: 'uppercase'
+                                borderRadius: 6, textTransform: 'uppercase',
+                                border: 'var(--border-width) solid var(--color-border)'
                             }}>{currentPlan === 'premium' ? 'DIAMANTE' : 'ATIVO'}</span>
                         </div>
                         {currentPlan !== 'premium' && (
                             <button
                                 type="button"
                                 className="neo-button w-full"
-                                style={{ marginTop: 'var(--space-2)', background: '#facc15', color: '#000', fontSize: 12, padding: '10px', fontWeight: 900 }}
+                                style={{ marginTop: 'var(--space-2)', fontSize: 12, padding: '10px', fontWeight: 900 }}
                                 onClick={handleStripeUpgrade}
                                 disabled={isRedirectingStripe}
                             >
-                                {isRedirectingStripe ? 'CARREGANDO...' : 'FAZER UPGRADE — R$ 9,90/MÊS (RECORRENTE)'}
+                                {isRedirectingStripe ? 'CARREGANDO...' : 'ASSINAR AGORA — R$ 9,90/MÊS ➜'}
                             </button>
                         )}
                     </div>
 
                     <div className="flex gap-2" style={{ marginTop: 'var(--space-1)' }}>
-                        <button type="submit" disabled={isSavingMaster || uploadingImage} className="neo-button" style={{ flex: 1, background: 'var(--color-success)', color: 'white' }}>
-                            {isSavingMaster ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
+                        <button type="submit" disabled={isSavingMaster || uploadingImage} className="neo-button" style={{ flex: 1 }}>
+                            {isSavingMaster ? 'SALVANDO...' : '✦ SALVAR ALTERAÇÕES'}
                         </button>
-                        <button type="button" disabled={isSavingMaster} className="neo-button" style={{ flex: 1, background: '#eee' }} onClick={() => setIsEditMasterOpen(false)}>
+                        <button type="button" disabled={isSavingMaster} className="neo-button neo-button--ghost" style={{ flex: 1 }} onClick={() => setIsEditMasterOpen(false)}>
                             CANCELAR
                         </button>
                     </div>

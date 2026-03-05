@@ -140,7 +140,7 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
     return (
         <div style={{
             position: 'fixed', inset: 0, zIndex: 3000,
-            background: '#1a1a1a',
+            background: 'var(--color-background)',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             gap: 24,
@@ -148,7 +148,7 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
             <div style={{ textAlign: 'center' }}>
                 <div style={{
                     width: 90, height: 90,
-                    border: '4px solid #fff',
+                    border: '4px solid var(--color-border-gold)',
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 12px',
@@ -162,15 +162,15 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                         <span style={{ fontSize: 50 }}>{hero.avatar || '🦸'}</span>
                     )}
                 </div>
-                <h2 style={{ color: '#fff', margin: 0, fontSize: 22 }}>
+                <h2 style={{ color: 'var(--color-text)', margin: 0, fontSize: 22, fontFamily: 'var(--font-family-heading)' }}>
                     {step === 'enter' ? `Bem-vindo de volta, ${hero.nome}!` : `Olá, ${hero.nome}!`}
                 </h2>
                 {step === 'enter' && (
-                    <p style={{ color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', fontSize: 13 }}>Nível {hero.nivel} · ⭐ {hero.xp} XP</p>
+                    <p style={{ color: 'var(--color-text-muted)', margin: '4px 0 0', fontSize: 13 }}>Nível {hero.nivel} · ⭐ {hero.xp} XP</p>
                 )}
             </div>
 
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 800, margin: 0 }}>
+            <p style={{ color: 'var(--color-text)', fontWeight: 800, margin: 0 }}>
                 {step === 'enter' && 'Digite seu PIN secreto'}
                 {step === 'create' && 'Crie um PIN secreto de 4 números'}
                 {step === 'confirm' && 'Confirme seu novo PIN'}
@@ -184,9 +184,10 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                     <div key={i} style={{
                         width: 20, height: 20,
                         borderRadius: '50%',
-                        border: '3px solid #fff',
-                        background: d !== '' ? '#fff' : 'transparent',
+                        border: '3px solid var(--color-primary-light)',
+                        background: d !== '' ? 'var(--color-primary)' : 'transparent',
                         transition: 'background 0.1s ease',
+                        boxShadow: d !== '' ? 'var(--glow-gold)' : 'none',
                     }} />
                 ))}
             </div>
@@ -204,8 +205,8 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                     <button key={num} onClick={() => handleKey(num.toString())}
                         style={{
                             width: 70, height: 70, borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.2)',
-                            color: '#fff', fontSize: 28, fontWeight: 800, cursor: 'pointer',
+                            background: 'var(--color-surface)', border: 'var(--border-width) solid var(--color-border)',
+                            color: 'var(--color-text)', fontSize: 28, fontWeight: 800, cursor: 'pointer',
                         }}
                     >{num}</button>
                 ))}
@@ -213,14 +214,14 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                 <button onClick={() => handleKey('0')}
                     style={{
                         width: 70, height: 70, borderRadius: '50%',
-                        background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.2)',
-                        color: '#fff', fontSize: 28, fontWeight: 800, cursor: 'pointer',
+                        background: 'var(--color-surface)', border: 'var(--border-width) solid var(--color-border)',
+                        color: 'var(--color-text)', fontSize: 28, fontWeight: 800, cursor: 'pointer',
                     }}
                 >0</button>
                 <button onClick={() => handleKey('DEL')}
                     style={{
                         width: 70, height: 70, borderRadius: '50%', background: 'transparent',
-                        border: 'none', color: '#fff', fontSize: 24, fontWeight: 800, cursor: 'pointer',
+                        border: 'none', color: 'var(--color-text-muted)', fontSize: 24, fontWeight: 800, cursor: 'pointer',
                     }}
                 >⌫</button>
             </div>
@@ -229,8 +230,8 @@ export const PinEntry: React.FC<PinEntryProps> = ({ hero, onSuccess, onCancel })
                 onClick={onCancel}
                 style={{
                     marginTop: 32, padding: '12px 24px',
-                    background: 'transparent', border: '2px solid rgba(255,255,255,0.3)',
-                    color: '#fff', borderRadius: 12, fontWeight: 800, cursor: 'pointer',
+                    background: 'transparent', border: 'var(--border-width) solid var(--color-border)',
+                    color: 'var(--color-text-muted)', borderRadius: 12, fontWeight: 800, cursor: 'pointer',
                 }}
             >
                 Cancelar
