@@ -8,7 +8,7 @@ export interface Quest {
     descricao?: string;
     xp_reward: number;
     fc_reward: number;
-    status: 'active' | 'pending' | 'completed';
+    status: 'active' | 'pending' | 'completed' | 'approved';
     duracao_minutos?: number; // tempo do timer em minutos
     assignee_id?: string | null; // ID do heroi designado. null = todos
     is_recurring: boolean;
