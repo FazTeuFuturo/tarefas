@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppData } from '../../hooks/useAppData';
 import { QuestList } from '../../components/QuestList';
@@ -74,6 +75,20 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [uploadingImage, setUploadingImage] = useState(false);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
     const [tempImage, setTempImage] = useState<string | null>(null);
+
+    // Tavern form
+    const [isCreatingReward, setIsCreatingReward] = useState(false);
+    const [rewardTitle, setRewardTitle] = useState('');
+    const [rewardDesc, setRewardDesc] = useState('');
+    const [rewardCost, setRewardCost] = useState(100);
+    const [rewardIcon, setRewardIcon] = useState('🎁');
+
+    // Bonus
+    const [isBonusOpen, setIsBonusOpen] = useState(false);
+    const [bonusHeroId, setBonusHeroId] = useState('');
+    const [bonusFC, setBonusFC] = useState(50);
+    const [bonusXP, setBonusXP] = useState(0);
+    const [bonusSending, setBonusSending] = useState(false);
 
     const handleStripeUpgrade = async () => {
         setIsRedirectingStripe(true);
