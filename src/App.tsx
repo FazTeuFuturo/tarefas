@@ -4,9 +4,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import MasterDashboard from './pages/parent/MasterDashboard';
 import HeroDashboard from './pages/hero/HeroDashboard';
-import { PinEntry } from './components/PinEntry';
 import { ProfilePicker } from './components/ProfilePicker';
-import { supabase } from './lib/supabase';
 
 // ─── AppRouter ────────────────────────────────────────────────────────────────
 function AppRouter() {

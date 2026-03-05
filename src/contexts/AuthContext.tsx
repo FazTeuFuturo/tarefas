@@ -171,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user, profile, activeProfile,
             isLoading, isHeroMode,
             signOut, refreshProfile,
-            switchToHero, exitHeroMode
+            switchToHero, exitHeroMode, clearActiveProfile
         }}>
             {children}
         </AuthContext.Provider>
