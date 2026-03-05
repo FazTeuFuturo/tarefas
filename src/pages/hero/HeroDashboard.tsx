@@ -203,6 +203,15 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                 </button>
             </nav>
 
+            <HeroSettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                hero={activeProfile}
+                onSaved={() => {
+                    window.location.reload();
+                }}
+            />
+
             <style>{`
                 @keyframes slideIn {
                     from { transform: translateY(16px); opacity: 0; }
