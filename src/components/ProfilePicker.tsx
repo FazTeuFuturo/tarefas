@@ -100,13 +100,15 @@ export const ProfilePicker: React.FC = () => {
                             boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
                             overflow: 'hidden'
                         }}>
-                            {p.avatar ? (
-                                <img src={p.avatar} alt={p.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                <span style={{ fontSize: '3rem' }}>
-                                    {p.role === 'parent' ? '👑' : '⚔️'}
-                                </span>
-                            )}
+                            {(() => {
+                                const isUrl = p.foto_url || p.avatar?.startsWith('http') || p.avatar?.startsWith('data:');
+                                const displayUrl = p.foto_url || (isUrl ? p.avatar : null);
+                                const emoji = !displayUrl && p.avatar ? p.avatar : (p.role === 'parent' ? '👑' : '⚔️');
+                                if (displayUrl) {
+                                    return <img src={displayUrl} alt={p.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+                                }
+                                return <span style={{ fontSize: '4rem' }}>{emoji}</span>;
+                            })()}
                         </div>
                         <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 600 }}>
                             {p.nome}

@@ -11,7 +11,7 @@ interface HeroDashboardProps {
 }
 
 export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {}) {
-    const { profile } = useAuth();
+    const { activeProfile } = useAuth();
     const { myQuests, managedQuests, leaderboard, updateFCBalance, completeQuest, startQuestTimer, pauseQuestTimer, resetQuestTimer } = useAppData();
     const [view, setView] = useState('quests');
 
@@ -19,7 +19,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
     const adventureQuests = myQuests.filter(q => !q.is_recurring);
     const completedDaily = dailyTasks.filter(q => q.status === 'pending' || q.status === 'completed').length;
 
-    if (!profile) return <div>Herói não encontrado.</div>;
+    if (!activeProfile) return <div>Herói não selecionado.</div>;
 
     return (
         <div className="mobile-app-container">
@@ -30,12 +30,12 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between'
             }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>⚔️ {profile.nome}</h1>
+                    <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>⚔️ {activeProfile.nome}</h1>
                     <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)', opacity: 0.8 }}>O que vamos conquistar hoje?</p>
                 </div>
                 <div className="flex gap-2 items-center">
                     <span style={{ fontWeight: 800, fontSize: 'var(--font-size-sm)', background: '#fff', padding: '4px 8px', border: '2px solid #000', borderRadius: 6 }}>
-                        🪙 {profile.fc_balance} FC
+                        🪙 {activeProfile.fc_balance} FC
                     </span>
                     {heroExitButton}
                 </div>
@@ -46,7 +46,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                 {/* ─── MISSÕES ─── */}
                 {view === 'quests' && (
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
-                        <StatusBar level={profile.nivel} xp={profile.xp} xpMax={profile.nivel * 100 + 500} credits={profile.fc_balance} />
+                        <StatusBar level={activeProfile.nivel} xp={activeProfile.xp} xpMax={activeProfile.nivel * 100 + 500} credits={activeProfile.fc_balance} />
 
                         <Inventory />
 
@@ -89,7 +89,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                 {/* ─── TAVERNA ─── */}
                 {view === 'tavern' && (
                     <div style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
-                        <Tavern fcBalance={profile.fc_balance} onPurchase={updateFCBalance} />
+                        <Tavern fcBalance={activeProfile.fc_balance} onPurchase={updateFCBalance} />
                     </div>
                 )}
 
@@ -102,7 +102,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                             <div className="flex-col gap-2">
                                 {leaderboard.filter(m => m.role === 'child').map((member, idx) => (
                                     <div key={member.id} className="flex items-center gap-2 neo-box"
-                                        style={{ padding: 'var(--space-2)', background: member.id === profile.id ? '#fff' : 'rgba(255,255,255,0.7)' }}>
+                                        style={{ padding: 'var(--space-2)', background: member.id === activeProfile.id ? '#fff' : 'rgba(255,255,255,0.7)' }}>
                                         <span style={{ fontWeight: 800, fontSize: idx === 0 ? 24 : 18, width: 32, textAlign: 'center' }}>
                                             {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
                                         </span>
@@ -114,7 +114,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                                         <div style={{ flex: 1 }}>
                                             <strong style={{ fontSize: 'var(--font-size-sm)' }}>
                                                 {member.nome}
-                                                {member.id === profile.id && (
+                                                {member.id === activeProfile.id && (
                                                     <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, background: '#000', color: '#fff', padding: '1px 5px', borderRadius: 3 }}>VOCÊ</span>
                                                 )}
                                             </strong>
@@ -151,9 +151,9 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                         {/* Missões ao vivo */}
                         <div className="neo-box" style={{ padding: 'var(--space-3)' }}>
                             <h2 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>⚡ Missões em Andamento</h2>
-                            {managedQuests.filter(q => q.status === 'active' && q.assignee_id !== profile.id).length === 0
+                            {managedQuests.filter(q => q.status === 'active' && q.assignee_id !== activeProfile.id).length === 0
                                 ? <p style={{ margin: 0, opacity: 0.5, fontSize: 'var(--font-size-sm)' }}>Nenhum colega em missão agora.</p>
-                                : managedQuests.filter(q => q.status === 'active' && q.assignee_id !== profile.id).map(q => {
+                                : managedQuests.filter(q => q.status === 'active' && q.assignee_id !== activeProfile.id).map(q => {
                                     const hero = leaderboard.find(p => p.id === q.assignee_id);
                                     return (
                                         <div key={q.id} className="flex items-center gap-2" style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>

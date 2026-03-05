@@ -36,7 +36,7 @@ export interface Redemption {
 }
 
 export function useAppData() {
-    const { profile, refreshProfile } = useAuth();
+    const { activeProfile, profile, refreshProfile } = useAuth();
     const [myQuests, setMyQuests] = useState<Quest[]>([]);
     const [managedQuests, setManagedQuests] = useState<Quest[]>([]);
     const [rewards, setRewards] = useState<Reward[]>([]);
@@ -45,32 +45,32 @@ export function useAppData() {
     const [loading, setLoading] = useState(true);
 
     const fetchAll = useCallback(async () => {
-        if (!profile) return;
+        if (!activeProfile) return;
         setLoading(true);
         try {
             // Fetch all quests (active and pending) belonging to the clan
             const questQuery = supabase.from('tasks').select('*')
-                .eq('clan_id', profile.clan_id)
+                .eq('clan_id', activeProfile.clan_id)
                 .in('status', ['active', 'pending'])
                 .order('created_at', { ascending: false });
 
-            const redemptionsQuery = profile.role === 'parent' || (profile.role as any) === 'mestre'
-                ? supabase.from('redemptions').select('*, profiles(nome), rewards(*)').eq('clan_id', profile.clan_id).order('created_at', { ascending: false }).limit(50)
-                : supabase.from('redemptions').select('*, profiles(nome), rewards(*)').eq('profile_id', profile.id).eq('clan_id', profile.clan_id).order('created_at', { ascending: false }).limit(50);
+            const redemptionsQuery = activeProfile.role === 'parent' || (activeProfile.role as any) === 'mestre'
+                ? supabase.from('redemptions').select('*, profiles(nome), rewards(*)').eq('clan_id', activeProfile.clan_id).order('created_at', { ascending: false }).limit(50)
+                : supabase.from('redemptions').select('*, profiles(nome), rewards(*)').eq('profile_id', activeProfile.id).eq('clan_id', activeProfile.clan_id).order('created_at', { ascending: false }).limit(50);
 
             const [questsRes, leaderRes, rewardsRes, redemptionsRes] = await Promise.all([
                 questQuery,
                 supabase.from('profiles').select('id, nome, nivel, xp, fc_balance, avatar, foto_url, data_nascimento, role, invite_token')
-                    .eq('clan_id', profile.clan_id)
+                    .eq('clan_id', activeProfile.clan_id)
                     .order('xp', { ascending: false }).limit(20),
-                supabase.from('rewards').select('*').eq('clan_id', profile.clan_id).order('cost_fc', { ascending: true }),
+                supabase.from('rewards').select('*').eq('clan_id', activeProfile.clan_id).order('cost_fc', { ascending: true }),
                 redemptionsQuery
             ]);
 
             if (questsRes.data) {
                 const allQuests = questsRes.data as Quest[];
                 setManagedQuests(allQuests);
-                setMyQuests(allQuests.filter(q => q.assignee_id === null || q.assignee_id === profile.id));
+                setMyQuests(allQuests.filter(q => q.assignee_id === null || q.assignee_id === activeProfile.id));
             }
             if (leaderRes.data) setLeaderboard(leaderRes.data as LeaderboardEntry[]);
             if (rewardsRes.data) setRewards(rewardsRes.data as Reward[]);
@@ -80,15 +80,15 @@ export function useAppData() {
         } finally {
             setLoading(false);
         }
-    }, [profile]);
+    }, [activeProfile]);
 
     useEffect(() => {
-        if (profile) {
+        if (activeProfile) {
             fetchAll();
         } else {
             setLoading(false);
         }
-    }, [profile, fetchAll]);
+    }, [activeProfile, fetchAll]);
 
     const completeQuest = useCallback(async (questId: string) => {
         // Optimistic update
@@ -147,12 +147,12 @@ export function useAppData() {
     }, [fetchAll]);
 
     const updateFCBalance = useCallback(async () => {
-        if (!profile) return;
+        if (!activeProfile) return;
         await refreshProfile();
-    }, [profile, refreshProfile]);
+    }, [activeProfile, refreshProfile]);
 
     const createTask = useCallback(async (title: string, description: string, xpReward: number, fcReward: number, assigneeId?: string, duracaoMinutos?: number, isRecurring: boolean = false) => {
-        if (!profile || profile.role !== 'parent') return;
+        if (!activeProfile || activeProfile.role !== 'parent') return;
         setLoading(true);
         try {
             const newTask = {
@@ -161,8 +161,8 @@ export function useAppData() {
                 xp_reward: xpReward,
                 fc_reward: fcReward,
                 status: 'active',
-                created_by: profile.id,
-                clan_id: profile.clan_id,
+                created_by: activeProfile.id,
+                clan_id: activeProfile.clan_id,
                 assignee_id: assigneeId || null,
                 duracao_minutos: duracaoMinutos || 10,
                 is_recurring: isRecurring
@@ -174,10 +174,10 @@ export function useAppData() {
         } finally {
             setLoading(false);
         }
-    }, [profile, fetchAll]);
+    }, [activeProfile, fetchAll]);
 
     const deleteTask = useCallback(async (taskId: string) => {
-        if (!profile || profile.role !== 'parent') return;
+        if (!activeProfile || activeProfile.role !== 'parent') return;
         try {
             const { error } = await supabase.from('tasks').delete().eq('id', taskId);
             if (error) throw error;
@@ -186,10 +186,10 @@ export function useAppData() {
             console.error('deleteTask error:', err.message);
             alert('Erro ao excluir missão: ' + err.message);
         }
-    }, [profile, fetchAll]);
+    }, [activeProfile, fetchAll]);
 
     const updateTask = useCallback(async (taskId: string, updates: Partial<Quest>) => {
-        if (!profile || profile.role !== 'parent') return;
+        if (!activeProfile || activeProfile.role !== 'parent') return;
         try {
             const { error } = await supabase.from('tasks').update(updates).eq('id', taskId);
             if (error) throw error;
@@ -198,10 +198,10 @@ export function useAppData() {
             console.error('updateTask error:', err.message);
             alert('Erro ao atualizar missão: ' + err.message);
         }
-    }, [profile, fetchAll]);
+    }, [activeProfile, fetchAll]);
 
     const createTavernItem = useCallback(async (title: string, description: string, costFc: number, icon: string) => {
-        if (!profile || profile.role !== 'parent') return;
+        if (!activeProfile || activeProfile.role !== 'parent') return;
         setLoading(true);
         try {
             const newReward = {
@@ -209,7 +209,7 @@ export function useAppData() {
                 descricao: description,
                 cost_fc: costFc,
                 icon_type: icon,
-                clan_id: profile.clan_id
+                clan_id: activeProfile.clan_id
             };
             await supabase.from('rewards').insert([newReward]);
             await fetchAll();

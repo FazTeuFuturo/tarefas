@@ -134,7 +134,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (user) {
             const p = await loadProfile(user.id);
             setProfile(p);
-            if (!isHeroMode) setActiveProfile(p);
+            if (!isHeroMode) {
+                setActiveProfile(p);
+            } else if (activeProfile) {
+                // Se um herói está jogando, precisamos atualizar os dados DELE também (saldo, xp...)
+                const heroProfile = await loadProfile(activeProfile.id);
+                if (heroProfile) setActiveProfile(heroProfile);
+            }
         }
     };
 
