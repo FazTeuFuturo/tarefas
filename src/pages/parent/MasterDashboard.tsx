@@ -55,8 +55,8 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const numHeroes = leaderboard.filter(m => m.role === 'child').length;
     const numMasters = leaderboard.filter(m => m.role === 'parent').length;
 
-    // Contagem de Missões para Limites
-    const activeQuestsList = managedQuests.filter(q => q.status !== 'approved'); // Somente as que ainda não foram finalizadas/aprovadas
+    // Contagem de Missões para Limites (inclui Ativas, Completas e Pendentes - TUDO que não foi aprovado ainda)
+    const activeQuestsList = managedQuests.filter(q => q.status !== 'approved');
     const normalCount = activeQuestsList.filter(q => !q.is_recurring).length;
     const recurringCount = activeQuestsList.filter(q => q.is_recurring).length;
 
@@ -70,23 +70,28 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [editMasterBirthDate, setEditMasterBirthDate] = useState('');
     const [editMasterPhoto, setEditMasterPhoto] = useState('');
     const [isSavingMaster, setIsSavingMaster] = useState(false);
+    const [isRedirectingStripe, setIsRedirectingStripe] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
     const [tempImage, setTempImage] = useState<string | null>(null);
 
-    // Tavern form
-    const [isCreatingReward, setIsCreatingReward] = useState(false);
-    const [rewardTitle, setRewardTitle] = useState('');
-    const [rewardDesc, setRewardDesc] = useState('');
-    const [rewardCost, setRewardCost] = useState(100);
-    const [rewardIcon, setRewardIcon] = useState('🎁');
-
-    // Bonus
-    const [isBonusOpen, setIsBonusOpen] = useState(false);
-    const [bonusHeroId, setBonusHeroId] = useState('');
-    const [bonusFC, setBonusFC] = useState(50);
-    const [bonusXP, setBonusXP] = useState(0);
-    const [bonusSending, setBonusSending] = useState(false);
+    const handleStripeUpgrade = async () => {
+        setIsRedirectingStripe(true);
+        try {
+            const { data, error } = await supabase.functions.invoke('create-stripe-checkout');
+            if (error) throw error;
+            if (data?.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error('URL de checkout não recebida');
+            }
+        } catch (err: any) {
+            console.error('Erro ao iniciar checkout:', err);
+            alert('Não foi possível iniciar o checkout. Verifique sua conexão ou tente novamente mais tarde.');
+        } finally {
+            setIsRedirectingStripe(false);
+        }
+    };
 
     const handleGiveBonus = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -164,7 +169,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         {/* Status */}
                         <StatusBar level={profile.nivel} xp={profile.xp} xpMax={profile.nivel * 100 + 500} credits={profile.fc_balance} />
 
-                        {/* Espaço reservado para estatísticas futuras */}
+                        {/* Mural de Performance */}
                         <div className="neo-box" style={{ padding: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 12, background: '#f8fafc' }}>
                             <span style={{ fontSize: 32 }}>📈</span>
                             <div>
@@ -172,6 +177,28 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 <p style={{ margin: 0, fontSize: 13, opacity: 0.6 }}>Em breve: Estatísticas detalhadas do clã.</p>
                             </div>
                         </div>
+
+                        {/* Banner de Upgrade Fricção Zero (Stripe) */}
+                        {isPrimaryParent && currentPlan === 'free' && (
+                            <div className="bg-indigo-600 border-4 border-slate-900 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-white mb-8 relative overflow-hidden group">
+                                <div className="relative z-10">
+                                    <h3 className="text-2xl font-black uppercase italic mb-2">🚀 Torne-se um Clã Lendário!</h3>
+                                    <p className="font-bold mb-4 opacity-90 max-w-lg">
+                                        Libere limites de heróis, crie missões infinitas e tenha acesso ao Mural de Performance exclusivo por apenas <span className="text-yellow-300 underline font-black">R$ 9,90/mês</span>.
+                                    </p>
+                                    <button
+                                        onClick={handleStripeUpgrade}
+                                        disabled={isRedirectingStripe}
+                                        className="bg-white text-indigo-600 border-4 border-slate-900 px-6 py-3 font-black uppercase hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all disabled:opacity-50"
+                                    >
+                                        {isRedirectingStripe ? 'Redirecionando...' : 'Fazer Upgrade Agora ➜'}
+                                    </button>
+                                </div>
+                                <div className="absolute -right-4 -bottom-4 text-9xl font-black opacity-10 select-none group-hover:scale-110 transition-transform">
+                                    STRIPE
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -517,7 +544,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         </button>
                                     ) : (
                                         <button
-                                            onClick={() => alert('Limite atingido! Faça upgrade para o Plano Premium (R$ 9,90) para adicionar até 3 heróis.')}
+                                            onClick={handleStripeUpgrade}
                                             style={{
                                                 border: '3px dashed var(--color-danger)',
                                                 borderRadius: 12, background: 'rgba(239, 68, 68, 0.05)',
@@ -609,7 +636,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         </button>
                                     ) : (
                                         <button
-                                            onClick={() => alert('Limite de Mestres atingido! No Plano Premium você pode ter co-parentalidade (2 mestres).')}
+                                            onClick={handleStripeUpgrade}
                                             style={{
                                                 border: '3px dashed #bbb',
                                                 borderRadius: 12, background: '#f5f5f5',
@@ -669,7 +696,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         if (canAddNormalQuest || canAddRecurringQuest) {
                             setIsCreateModalOpen(true);
                         } else {
-                            alert(`Limite de missões atingido no plano atual (${limits.normalQuests} normais / ${limits.recurringQuests} recorrente). Faça upgrade para o Plano Premium!`);
+                            handleStripeUpgrade();
                         }
                     }}
                     style={{
@@ -696,6 +723,8 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 onSave={createTask}
                 allProfiles={leaderboard}
                 parentProfile={profile}
+                canAddNormal={canAddNormalQuest}
+                canAddRecurring={canAddRecurringQuest}
             />
             <MissionEditModal
                 isOpen={isEditingModalOpen}

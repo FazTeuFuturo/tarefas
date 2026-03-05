@@ -8,10 +8,13 @@ interface MissionCreateModalProps {
     onSave: (title: string, desc: string, xp: number, fc: number, assigneeId?: string, duration?: number | null, isRecurring?: boolean) => Promise<void>;
     allProfiles: LeaderboardEntry[];
     parentProfile: { id: string; nome: string } | null;
+    canAddNormal?: boolean;
+    canAddRecurring?: boolean;
 }
 
 export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
-    isOpen, onClose, onSave, allProfiles, parentProfile
+    isOpen, onClose, onSave, allProfiles, parentProfile,
+    canAddNormal = true, canAddRecurring = true
 }) => {
     const [title, setTitle] = useState('');
     const [desc, setDesc] = useState('');
@@ -21,6 +24,8 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
     const [assigneeId, setAssigneeId] = useState('');
     const [isRecurring, setIsRecurring] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+
+    const isBlocked = isRecurring ? !canAddRecurring : !canAddNormal;
 
     if (!isOpen) return null;
 
@@ -95,8 +100,21 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
                 {/* Recorrente */}
                 <div
                     className="flex items-center gap-2"
-                    style={{ padding: 'var(--space-2)', background: isRecurring ? 'var(--color-primary)' : '#f5f5f5', borderRadius: 8, border: '2px solid #000', cursor: 'pointer' }}
-                    onClick={() => setIsRecurring(!isRecurring)}
+                    style={{
+                        padding: 'var(--space-2)',
+                        background: isRecurring ? 'var(--color-primary)' : '#f5f5f5',
+                        borderRadius: 8,
+                        border: '2px solid #000',
+                        cursor: canAddRecurring || !isRecurring ? 'pointer' : 'not-allowed',
+                        opacity: !isRecurring && !canAddRecurring ? 0.6 : 1
+                    }}
+                    onClick={() => {
+                        if (!isRecurring && !canAddRecurring) {
+                            alert("Limite de missões recorrentes atingido! Faça upgrade para criar mais.");
+                            return;
+                        }
+                        setIsRecurring(!isRecurring);
+                    }}
                 >
                     <div style={{
                         width: 22, height: 22, border: '2px solid #000', borderRadius: 4,
@@ -111,13 +129,25 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
                     </div>
                 </div>
 
+                {isBlocked && (
+                    <p style={{ margin: 0, color: 'var(--color-danger)', fontSize: 11, fontWeight: 800, textAlign: 'center' }}>
+                        ⚠️ Limite do plano gratuito atingido para este tipo de missão!
+                    </p>
+                )}
+
                 <button
                     type="submit"
                     className="neo-button w-full"
-                    style={{ background: 'var(--color-secondary)', padding: 'var(--space-3)', fontSize: 'var(--font-size-lg)', marginTop: 'var(--space-1)' }}
-                    disabled={isSaving}
+                    style={{
+                        background: isBlocked ? '#ccc' : 'var(--color-secondary)',
+                        padding: 'var(--space-3)',
+                        fontSize: 'var(--font-size-lg)',
+                        marginTop: 'var(--space-1)',
+                        cursor: isBlocked ? 'not-allowed' : 'pointer'
+                    }}
+                    disabled={isSaving || isBlocked}
                 >
-                    {isSaving ? '⏳ SALVANDO...' : '✨ CRIAR MISSÃO'}
+                    {isSaving ? '⏳ SALVANDO...' : isBlocked ? '🚫 LIMITE ATINGIDO' : '✨ CRIAR MISSÃO'}
                 </button>
             </form>
         </Modal>
