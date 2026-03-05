@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { StatusBar } from '../../components/StatusBar';
 import { Tavern } from '../../components/Tavern';
 import { Inventory } from '../../components/Inventory';
+import { HeroSettingsModal } from '../../components/HeroSettingsModal';
 import { QuestList } from '../../components/QuestList';
 import { useAppData } from '../../hooks/useAppData';
 
@@ -14,6 +15,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
     const { activeProfile } = useAuth();
     const { myQuests, managedQuests, leaderboard, updateFCBalance, completeQuest, startQuestTimer, pauseQuestTimer, resetQuestTimer } = useAppData();
     const [view, setView] = useState('quests');
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     const dailyTasks = myQuests.filter(q => q.is_recurring);
     const adventureQuests = myQuests.filter(q => !q.is_recurring);
@@ -34,6 +36,13 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                     <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)', opacity: 0.8 }}>O que vamos conquistar hoje?</p>
                 </div>
                 <div className="flex gap-2 items-center">
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, padding: 0 }}
+                        title="Configurações"
+                    >
+                        ⚙️
+                    </button>
                     <span style={{ fontWeight: 800, fontSize: 'var(--font-size-sm)', background: '#fff', padding: '4px 8px', border: '2px solid #000', borderRadius: 6 }}>
                         🪙 {activeProfile.fc_balance} FC
                     </span>

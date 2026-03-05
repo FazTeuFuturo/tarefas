@@ -6,6 +6,7 @@ import { RewardCard } from '../../components/RewardCard';
 import { MissionEditModal } from '../../components/MissionEditModal';
 import { MissionCreateModal } from '../../components/MissionCreateModal';
 import { HeroCreateModal } from '../../components/HeroCreateModal';
+import { MasterCreateModal } from '../../components/MasterCreateModal';
 import { PinEntry } from '../../components/PinEntry';
 import { StatusBar } from '../../components/StatusBar';
 import { Quest } from '../../components/QuestCard';
@@ -36,6 +37,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [isEditingModalOpen, setIsEditingModalOpen] = useState(false);
     const [filterMember, setFilterMember] = useState<string>('all');
     const [isHeroCreateOpen, setIsHeroCreateOpen] = useState(false);
+    const [isMasterCreateOpen, setIsMasterCreateOpen] = useState(false);
     const [pendingSwitch, setPendingSwitch] = useState<any | null>(null);
     const [heroToDelete, setHeroToDelete] = useState<any | null>(null);
 
@@ -567,14 +569,9 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                     </div>
                                 ))}
 
-                                {/* Botão de Convidar Mestre */}
+                                {/* Botão de Adicionar Mestre */}
                                 <button
-                                    onClick={() => {
-                                        const link = `${window.location.origin}/?invite_clan=${profile.clan_id}`;
-                                        navigator.clipboard.writeText(link)
-                                            .then(() => alert(`✅ Link de Convite Copiado!\n\nEnvie para o outro Mestre (Pai/Mãe) se cadastrar no seu clã.\n\n${link}`))
-                                            .catch(() => alert(link));
-                                    }}
+                                    onClick={() => setIsMasterCreateOpen(true)}
                                     style={{
                                         border: '3px dashed var(--color-primary)',
                                         borderRadius: 12, background: 'transparent',
@@ -588,7 +585,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
                                 >
                                     <span style={{ fontSize: 24, display: 'block' }}>🤝</span>
-                                    <span style={{ fontSize: 11, fontWeight: 800 }}>Convidar Mestre</span>
+                                    <span style={{ fontSize: 13, fontWeight: 800 }}>Adicionar Mestre</span>
                                 </button>
                             </div>
                         </div>
@@ -672,6 +669,16 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                     setIsHeroCreateOpen(false);
                     // Força o recarregamento temporário para refletir o novo herói na tela
                     // A solução ideal de longo prazo seria exportar `fetchAll` no useAppData e executá-lo aqui.
+                    window.location.reload();
+                }}
+            />
+            <MasterCreateModal
+                isOpen={isMasterCreateOpen}
+                onClose={() => setIsMasterCreateOpen(false)}
+                parentProfileId={profile.id}
+                clanId={profile.clan_id}
+                onCreated={() => {
+                    setIsMasterCreateOpen(false);
                     window.location.reload();
                 }}
             />

@@ -30,13 +30,8 @@ export const ProfilePicker: React.FC = () => {
     }, [masterProfile]);
 
     const handleSelectProfile = (p: Profile) => {
-        if (p.role === 'parent') {
-            // Mestre entra direto (por enquanto - no futuro pediremos PIN do master)
-            exitHeroMode();
-        } else {
-            // Herói precisa colocar o PIN
-            setSelectedHero(p);
-        }
+        // Agora tanto Mestre quanto Herói passam pela tela de PIN
+        setSelectedHero(p);
     };
 
     if (loading) {
@@ -52,7 +47,13 @@ export const ProfilePicker: React.FC = () => {
         return (
             <PinEntry
                 hero={selectedHero}
-                onSuccess={() => switchToHero(selectedHero)}
+                onSuccess={() => {
+                    if (selectedHero.role === 'parent') {
+                        exitHeroMode();
+                    } else {
+                        switchToHero(selectedHero);
+                    }
+                }}
                 onCancel={() => setSelectedHero(null)}
             />
         );

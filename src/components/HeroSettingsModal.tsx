@@ -1,97 +1,95 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Modal } from './Modal';
+import { hashPin } from '../lib/pinUtils';
+import { Profile } from '../contexts/AuthContext';
 import { uploadAvatar } from '../lib/storageUtils';
 import { ImageCropperModal } from './ImageCropperModal';
 
 const PRESET_AVATARS = ['🦁', '🐯', '🦊', '🐺', '🦝', '🐻', '🐼', '🐨', '🐸', '🐲', '🦄', '⚡', '🔥', '⭐', '🌙', '🌈'];
 
-interface HeroCreateModalProps {
+interface HeroSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    parentProfileId: string;
-    clanId: string;
-    onCreated: () => void;
+    hero: Profile;
+    onSaved: () => void;
 }
 
-export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
-    isOpen, onClose, parentProfileId, clanId, onCreated
+export const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
+    isOpen, onClose, hero, onSaved
 }) => {
-    const [nome, setNome] = useState('');
-    const [avatar, setAvatar] = useState('🦁');
-    const [dataNascimento, setDataNascimento] = useState('');
+    const [avatar, setAvatar] = useState(hero.avatar || '🦁');
+    const [customAvatarUrl, setCustomAvatarUrl] = useState<string | null>(
+        /^https?:\/\//.test(hero.avatar || '') ? hero.avatar : (hero.foto_url || null)
+    );
+
+    // PIN states
+    const [newPin, setNewPin] = useState('');
+    const [confirmPin, setConfirmPin] = useState('');
+
+    // UI states
     const [error, setError] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
-    const [customAvatarUrl, setCustomAvatarUrl] = useState<string | null>(null);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
     const [tempImage, setTempImage] = useState<string | null>(null);
 
-    const reset = () => {
-        setNome(''); setAvatar('🦁');
-        setDataNascimento(''); setError('');
-        setCustomAvatarUrl(null);
-    };
-
     if (!isOpen) return null;
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!nome.trim()) { setError('Nome é obrigatório.'); return; }
+
+        if (newPin && newPin.length !== 4) {
+            setError('O novo PIN deve ter exatamente 4 dígitos numéricos.');
+            return;
+        }
+
+        if (newPin && newPin !== confirmPin) {
+            setError('Os PINs digitados não são iguais.');
+            return;
+        }
+
         if (isSaving) return;
         setIsSaving(true);
         setError('');
+
         try {
-            const heroId = crypto.randomUUID();
-            const inviteToken = crypto.randomUUID();
+            const updates: any = {};
 
-            // Create hero with pin_hash = null (child sets own PIN on first access)
-            const { error: profileError } = await supabase.from('profiles').insert({
-                id: heroId,
-                email: `hero_${heroId.replace(/-/g, '')}@noreply.familyquest.app`,
-                nome: nome.trim(),
-                avatar: customAvatarUrl || avatar,
-                role: 'child',
-                xp: 0,
-                nivel: 1,
-                fc_balance: 0,
-                pin_hash: null,
-                invite_token: inviteToken,
-                created_by: parentProfileId,
-                clan_id: clanId,
-                data_nascimento: dataNascimento || null,
-                foto_url: customAvatarUrl || null,
-            });
+            // Se o customAvatarUrl estiver setado, usamos ele. Se não, usamos o emoji.
+            updates.avatar = customAvatarUrl || avatar;
+            updates.foto_url = customAvatarUrl || null;
 
-            if (profileError) throw new Error(`Erro ao criar perfil: ${profileError.message}`);
+            if (newPin) {
+                const saltToken = hero.invite_token || hero.id;
+                const newHash = await hashPin(newPin, saltToken);
+                updates.pin_hash = newHash;
+                updates.invite_token = saltToken;
+            }
 
-            onCreated();
-            reset();
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update(updates)
+                .eq('id', hero.id);
+
+            if (profileError) throw profileError;
+
+            onSaved();
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro desconhecido.');
+            setError(err instanceof Error ? err.message : 'Erro ao salvar configurações.');
         } finally {
             setIsSaving(false);
+            setNewPin('');
+            setConfirmPin('');
         }
     };
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={() => { reset(); onClose(); }} title="⚔️ Novo Herói">
-                <form onSubmit={handleCreate} className="flex-col gap-3">
-                    <p style={{ margin: 0, fontWeight: 800, opacity: 0.6, fontSize: 13 }}>
-                        O novo herói definirá seu próprio PIN secreto de 4 dígitos no primeiro acesso.
-                    </p>
-
-                    <div className="flex-col gap-1">
-                        <label className="neo-label">Nome do Personagem *</label>
-                        <input
-                            type="text" className="neo-input"
-                            placeholder="Ex: ArthurODestemido"
-                            value={nome} onChange={e => setNome(e.target.value)}
-                            autoFocus required maxLength={30}
-                        />
-                    </div>
+            <Modal isOpen={isOpen} onClose={onClose} title="⚙️ Configurações do Herói">
+                <form onSubmit={handleSave} className="flex-col gap-3">
+                    <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>Aparência e Segurança</h2>
 
                     <div className="flex-col gap-1">
                         <label className="neo-label">Avatar ou Foto</label>
@@ -114,7 +112,7 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
 
                             <div style={{ flex: 1 }}>
                                 <input
-                                    type="file" accept="image/*" id="hero-photo-upload"
+                                    type="file" accept="image/*" id="hero-photo-settings"
                                     style={{ display: 'none' }}
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
@@ -128,15 +126,15 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
                                         }
                                     }}
                                 />
-                                <label htmlFor="hero-photo-upload" className="neo-button" style={{ fontSize: 12, padding: '8px 12px', background: '#fff', width: '100%' }}>
-                                    {uploadingImage ? '⬆️ Enviando...' : '📷 Carregar Foto'}
+                                <label htmlFor="hero-photo-settings" className="neo-button" style={{ fontSize: 12, padding: '8px 12px', background: '#fff', width: '100%' }}>
+                                    {uploadingImage ? '⬆️ Enviando...' : '📷 Alterar Foto'}
                                 </label>
                                 {customAvatarUrl && (
                                     <button
                                         type="button"
                                         onClick={() => setCustomAvatarUrl(null)}
                                         style={{ display: 'block', marginTop: 4, fontSize: 11, background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', margin: '4px auto 0' }}
-                                    >Usar emoji em vez da foto</button>
+                                    >Remover foto e usar emoji</button>
                                 )}
                             </div>
                         </div>
@@ -161,9 +159,23 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
                         )}
                     </div>
 
+                    <div style={{ height: '1px', background: '#ddd', margin: '10px 0' }}></div>
+
                     <div className="flex-col gap-1">
-                        <label className="neo-label">Data de Nascimento <span style={{ fontWeight: 400, opacity: 0.5 }}>(opcional)</span></label>
-                        <input type="date" className="neo-input" value={dataNascimento} onChange={e => setDataNascimento(e.target.value)} />
+                        <label className="neo-label">Mudar PIN Secreto</label>
+                        <p style={{ margin: 0, fontSize: 12, opacity: 0.6 }}>Deixe em branco se não quiser alterar.</p>
+                        <div className="flex gap-2">
+                            <input
+                                type="password" inputMode="numeric" pattern="[0-9]*" maxLength={4}
+                                className="neo-input" placeholder="Novo PIN"
+                                value={newPin} onChange={e => setNewPin(e.target.value.replace(/[^0-9]/g, ''))}
+                            />
+                            <input
+                                type="password" inputMode="numeric" pattern="[0-9]*" maxLength={4}
+                                className="neo-input" placeholder="Confirmar"
+                                value={confirmPin} onChange={e => setConfirmPin(e.target.value.replace(/[^0-9]/g, ''))}
+                            />
+                        </div>
                     </div>
 
                     {error && <p style={{ color: 'var(--color-danger)', fontWeight: 800, margin: 0, fontSize: 13 }}>⚠️ {error}</p>}
@@ -172,9 +184,9 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
                         type="submit"
                         disabled={isSaving || uploadingImage}
                         className="neo-button w-full"
-                        style={{ background: isSaving ? '#999' : 'var(--color-success)', color: 'white', padding: 'var(--space-2)' }}
+                        style={{ background: isSaving ? '#999' : 'var(--color-success)', color: 'white', padding: 'var(--space-2)', marginTop: 10 }}
                     >
-                        {isSaving ? '⏳ CRIANDO...' : '✅ CRIAR HERÓI'}
+                        {isSaving ? '⏳ Salvando...' : '✅ Salvar Alterações'}
                     </button>
                 </form>
             </Modal>
@@ -186,7 +198,11 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
                 onCropComplete={async (croppedBlob) => {
                     setIsCropperOpen(false);
                     setUploadingImage(true);
-                    const url = await uploadAvatar(croppedBlob, parentProfileId);
+
+                    // Como não temos acesso imediato ao parentProfileId do Mestre que criou aqui, 
+                    // a gente faz upload vinculando ao clanId ou ao próprio hero.id.
+                    // O storageUtils usa o ID passado só pra criar um path único.
+                    const url = await uploadAvatar(croppedBlob, hero.id);
                     if (url) setCustomAvatarUrl(url);
                     setUploadingImage(false);
                 }}

@@ -6,7 +6,7 @@ import { ImageCropperModal } from './ImageCropperModal';
 
 const PRESET_AVATARS = ['🦁', '🐯', '🦊', '🐺', '🦝', '🐻', '🐼', '🐨', '🐸', '🐲', '🦄', '⚡', '🔥', '⭐', '🌙', '🌈'];
 
-interface HeroCreateModalProps {
+interface MasterCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
     parentProfileId: string;
@@ -14,7 +14,7 @@ interface HeroCreateModalProps {
     onCreated: () => void;
 }
 
-export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
+export const MasterCreateModal: React.FC<MasterCreateModalProps> = ({
     isOpen, onClose, parentProfileId, clanId, onCreated
 }) => {
     const [nome, setNome] = useState('');
@@ -45,17 +45,16 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
             const heroId = crypto.randomUUID();
             const inviteToken = crypto.randomUUID();
 
-            // Create hero with pin_hash = null (child sets own PIN on first access)
             const { error: profileError } = await supabase.from('profiles').insert({
-                id: heroId,
-                email: `hero_${heroId.replace(/-/g, '')}@noreply.familyquest.app`,
+                id: heroId, // Mantemos como unique ID gerado
+                email: `master_${heroId.replace(/-/g, '')}@noreply.familyquest.app`,
                 nome: nome.trim(),
                 avatar: customAvatarUrl || avatar,
-                role: 'child',
+                role: 'parent', // CRIANDO COMO PARENT
                 xp: 0,
                 nivel: 1,
                 fc_balance: 0,
-                pin_hash: null,
+                pin_hash: null, // Mestre criará PIN no primeiro acesso
                 invite_token: inviteToken,
                 created_by: parentProfileId,
                 clan_id: clanId,
@@ -77,14 +76,15 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={() => { reset(); onClose(); }} title="⚔️ Novo Herói">
+            <Modal isOpen={isOpen} onClose={() => { reset(); onClose(); }} title="⚔️ Novo Mestre">
                 <form onSubmit={handleCreate} className="flex-col gap-3">
+                    <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>👑 Adicionar Mestre</h2>
                     <p style={{ margin: 0, fontWeight: 800, opacity: 0.6, fontSize: 13 }}>
-                        O novo herói definirá seu próprio PIN secreto de 4 dígitos no primeiro acesso.
+                        O novo mestre definirá o próprio PIN de 4 dígitos no seu primeiro acesso à plataforma.
                     </p>
 
                     <div className="flex-col gap-1">
-                        <label className="neo-label">Nome do Personagem *</label>
+                        <label className="neo-label">Nome do Mestre *</label>
                         <input
                             type="text" className="neo-input"
                             placeholder="Ex: ArthurODestemido"
@@ -174,7 +174,7 @@ export const HeroCreateModal: React.FC<HeroCreateModalProps> = ({
                         className="neo-button w-full"
                         style={{ background: isSaving ? '#999' : 'var(--color-success)', color: 'white', padding: 'var(--space-2)' }}
                     >
-                        {isSaving ? '⏳ CRIANDO...' : '✅ CRIAR HERÓI'}
+                        {isSaving ? 'Convocando...' : 'Adicionar Mestre'}
                     </button>
                 </form>
             </Modal>
