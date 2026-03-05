@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mascot } from '../components/Mascot';
 export type MascotState = 'idle' | 'happy' | 'focused_password' | 'error';
@@ -9,6 +9,11 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister }) => {
+    useEffect(() => {
+        // Limpa qual perfil está jogando para sempre mostrar a Tela Netflix no próximo login
+        localStorage.removeItem('fq_active_profile_id');
+    }, []);
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [mascotState, setMascotState] = useState<MascotState>('idle');
