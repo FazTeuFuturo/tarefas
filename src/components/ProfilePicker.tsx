@@ -5,7 +5,7 @@ import { PinEntry } from './PinEntry';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
 
 export const ProfilePicker: React.FC = () => {
-    const { profile: masterProfile, switchToHero, exitHeroMode } = useAuth();
+    const { profile: masterProfile, switchToProfile } = useAuth();
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedHero, setSelectedHero] = useState<Profile | null>(null);
@@ -48,11 +48,7 @@ export const ProfilePicker: React.FC = () => {
             <PinEntry
                 hero={selectedHero}
                 onSuccess={() => {
-                    if (selectedHero.role === 'parent') {
-                        exitHeroMode();
-                    } else {
-                        switchToHero(selectedHero);
-                    }
+                    switchToProfile(selectedHero);
                 }}
                 onCancel={() => setSelectedHero(null)}
             />

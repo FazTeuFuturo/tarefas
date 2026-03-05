@@ -34,7 +34,6 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
     return (
         <div className="mobile-app-container">
             <header style={{
-                position: 'sticky', top: 0, zIndex: 100,
                 padding: 'var(--space-3) var(--space-2)',
                 background: 'var(--color-primary)',
                 borderBottom: '3px solid #000',

@@ -23,7 +23,7 @@ interface MasterDashboardProps {
 }
 
 export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps) {
-    const { profile, signOut } = useAuth();
+    const { activeProfile: profile, clearActiveProfile } = useAuth();
     const {
         managedQuests, myQuests, rewards, redemptions, leaderboard,
         completeQuest, createTask, deleteTask, updateTask,
@@ -102,9 +102,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
         <div className="mobile-app-container">
             {/* HEADER */}
             <header style={{
-                position: 'sticky', top: 0, zIndex: 100,
-                padding: 'var(--space-2) var(--space-2)',
-                paddingTop: 'var(--space-3)',
+                padding: 'var(--space-3) var(--space-2)',
                 background: 'var(--color-primary)',
                 borderBottom: '3px solid #000',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between'
@@ -116,7 +114,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                     </p>
                 </div>
                 <button
-                    onClick={signOut}
+                    onClick={clearActiveProfile}
                     className="neo-button"
                     style={{
                         padding: '8px',

@@ -28,6 +28,7 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
     switchToHero: (hero: Profile) => void;   // troca de perfil sem re-auth Supabase (mesmo dispositivo)
+    switchToProfile: (p: Profile) => void;   // troca para qualquer perfil (útil para múltiplos mestres)
     exitHeroMode: () => void;                // volta para o Mestre
     clearActiveProfile: () => void;          // limpa a seleção para voltar à tela de seleção de perfis
 }
@@ -144,11 +145,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    /** Switch to any profile (handling both heroes and secondary masters) */
+    const switchToProfile = (p: Profile) => {
+        setActiveProfile(p);
+        setIsHeroMode(p.role === 'child');
+        localStorage.setItem('fq_active_profile_id', p.id);
+    };
+
     /** Switch to a hero profile (same-device, no Supabase re-auth) */
     const switchToHero = (hero: Profile) => {
-        setActiveProfile(hero);
-        setIsHeroMode(true);
-        localStorage.setItem('fq_active_profile_id', hero.id);
+        switchToProfile(hero);
     };
 
     /** Return to the master's profile */
@@ -177,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user, profile, activeProfile,
             isLoading, isHeroMode,
             signOut, refreshProfile,
-            switchToHero, exitHeroMode, clearActiveProfile
+            switchToHero, switchToProfile, exitHeroMode, clearActiveProfile
         }}>
             {children}
         </AuthContext.Provider>
