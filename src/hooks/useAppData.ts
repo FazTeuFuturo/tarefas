@@ -90,13 +90,13 @@ export function useAppData() {
         }
     }, [activeProfile, fetchAll]);
 
-    const completeQuest = useCallback(async (questId: string) => {
+    const completeQuest = useCallback(async (questId: string, timeSaved: number = 0) => {
         // Optimistic update
         setMyQuests(prev => prev.filter(q => q.id !== questId));
         setManagedQuests(prev => prev.map(q => q.id === questId ? { ...q, status: 'pending' as const } : q));
 
-        // Update database to PENDING
-        await supabase.from('tasks').update({ status: 'pending' }).eq('id', questId);
+        // Update database to PENDING and save time_saved
+        await supabase.from('tasks').update({ status: 'pending', time_saved_seconds: timeSaved }).eq('id', questId);
 
         await fetchAll();
     }, [fetchAll]);
@@ -109,7 +109,7 @@ export function useAppData() {
             // Get current profile of the assignee
             const { data: profileToUpdate } = await supabase
                 .from('profiles')
-                .select('xp, fc_balance, nivel')
+                .select('xp, fc_balance, nivel, tempo_economizado_total')
                 .eq('id', quest.assignee_id)
                 .single();
 
@@ -125,9 +125,15 @@ export function useAppData() {
             // If recurring, set status back to 'active'
             const nextStatus = quest.is_recurring ? 'active' : 'completed';
 
+            // Get time_saved_seconds from task if exists, note managedQuests doesn't have it loaded if not selected, so let's fetch it, or if it doesn't matter we just get it
+            const { data: taskData } = await supabase.from('tasks').select('time_saved_seconds').eq('id', questId).single();
+            const timeSaved = taskData?.time_saved_seconds || 0;
+
+            const newTotalTimeSaved = (profileToUpdate.tempo_economizado_total || 0) + timeSaved;
+
             await Promise.all([
-                supabase.from('tasks').update({ status: nextStatus }).eq('id', questId),
-                supabase.from('profiles').update({ xp: finalXP, nivel: newNivel, fc_balance: newFC }).eq('id', quest.assignee_id),
+                supabase.from('tasks').update({ status: nextStatus, time_saved_seconds: 0 }).eq('id', questId),
+                supabase.from('profiles').update({ xp: finalXP, nivel: newNivel, fc_balance: newFC, tempo_economizado_total: newTotalTimeSaved }).eq('id', quest.assignee_id),
             ]);
 
             await fetchAll();
@@ -151,7 +157,7 @@ export function useAppData() {
         await refreshProfile();
     }, [activeProfile, refreshProfile]);
 
-    const createTask = useCallback(async (title: string, description: string, xpReward: number, fcReward: number, assigneeId?: string, duracaoMinutos?: number, isRecurring: boolean = false) => {
+    const createTask = useCallback(async (title: string, description: string, xpReward: number, fcReward: number, assigneeId?: string, duracaoMinutos?: number | null, isRecurring: boolean = false) => {
         if (!activeProfile || activeProfile.role !== 'parent') return;
         setLoading(true);
         try {
@@ -164,7 +170,7 @@ export function useAppData() {
                 created_by: activeProfile.id,
                 clan_id: activeProfile.clan_id,
                 assignee_id: assigneeId || null,
-                duracao_minutos: duracaoMinutos || 10,
+                duracao_minutos: duracaoMinutos ?? null,
                 is_recurring: isRecurring
             };
             await supabase.from('tasks').insert([newTask]);

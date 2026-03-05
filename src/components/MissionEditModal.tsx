@@ -8,7 +8,7 @@ interface MissionEditModalProps {
     onClose: () => void;
     onSave: (taskId: string, updates: Partial<Quest>) => void;
     quest: Quest | null;
-    childProfiles: LeaderboardEntry[];
+    allProfiles: LeaderboardEntry[];
     parentProfile?: LeaderboardEntry | null;
 }
 
@@ -17,14 +17,14 @@ export const MissionEditModal: React.FC<MissionEditModalProps> = ({
     onClose,
     onSave,
     quest,
-    childProfiles,
+    allProfiles,
     parentProfile
 }) => {
     const [title, setTitle] = useState('');
     const [desc, setDesc] = useState('');
     const [xp, setXp] = useState(100);
     const [fc, setFc] = useState(50);
-    const [duration, setDuration] = useState(10);
+    const [duration, setDuration] = useState<number | ''>(10);
     const [assignee, setAssignee] = useState('');
 
     useEffect(() => {
@@ -33,7 +33,7 @@ export const MissionEditModal: React.FC<MissionEditModalProps> = ({
             setDesc(quest.descricao || '');
             setXp(quest.xp_reward);
             setFc(quest.fc_reward);
-            setDuration(quest.duracao_minutos || 10);
+            setDuration(quest.duracao_minutos === null || quest.duracao_minutos === undefined ? '' : quest.duracao_minutos);
             setAssignee(quest.assignee_id || '');
         }
     }, [quest]);
@@ -47,7 +47,7 @@ export const MissionEditModal: React.FC<MissionEditModalProps> = ({
             descricao: desc,
             xp_reward: xp,
             fc_reward: fc,
-            duracao_minutos: duration,
+            duracao_minutos: typeof duration === 'number' ? duration : undefined,
             assignee_id: assignee || null
         });
         onClose();
@@ -85,12 +85,10 @@ export const MissionEditModal: React.FC<MissionEditModalProps> = ({
                     <div className="flex-col gap-1" style={{ flex: 1 }}>
                         <label className="neo-label">Duração (Min)</label>
                         <input
-                            type="number"
-                            className="neo-input"
+                            type="number" className="neo-input" placeholder="Sem tempo"
                             value={duration}
-                            onChange={e => setDuration(Number(e.target.value))}
-                            min={1}
-                            required
+                            onChange={e => setDuration(e.target.value ? Number(e.target.value) : '')}
+                            min={0}
                         />
                     </div>
                     <div className="flex-col gap-1" style={{ flex: 1 }}>
@@ -101,11 +99,8 @@ export const MissionEditModal: React.FC<MissionEditModalProps> = ({
                             onChange={e => setAssignee(e.target.value)}
                         >
                             <option value="">Qualquer Herói</option>
-                            {parentProfile && (
-                                <option value={parentProfile.id}>A mim mesmo ({parentProfile.nome})</option>
-                            )}
-                            {childProfiles.map(child => (
-                                <option key={child.id} value={child.id}>{child.nome}</option>
+                            {allProfiles.map(child => (
+                                <option key={child.id} value={child.id}>{child.nome} {child.id === parentProfile?.id ? '(Eu)' : ''}</option>
                             ))}
                         </select>
                     </div>

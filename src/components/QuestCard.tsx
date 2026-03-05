@@ -21,7 +21,7 @@ type QuestState = 'idle' | 'running' | 'paused' | 'done';
 
 interface QuestCardProps {
     quest: Quest;
-    onComplete: (id: string) => void;
+    onComplete: (id: string, timeSaved: number) => void;
     onDelete?: (id: string) => void;
     onEdit?: (quest: Quest) => void;
     isParent?: boolean; // Pais podem finalizar antes do tempo
@@ -48,8 +48,9 @@ export const QuestCard: React.FC<QuestCardProps> = ({
     onPauseTimer,
     onResetTimer
 }) => {
-    const duration = (quest.duracao_minutos ?? 5) * 60;
-    const [questState, setQuestState] = useState<QuestState>(quest.timer_status || 'idle');
+    const duration = (quest.duracao_minutos ?? 0) * 60;
+    const hasTimer = duration > 0;
+    const [questState, setQuestState] = useState<QuestState>(hasTimer ? (quest.timer_status || 'idle') : 'idle');
     const [timeLeft, setTimeLeft] = useState(duration);
     const [showXP, setShowXP] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -57,6 +58,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({
 
     // Calc initial time based on persistent data
     useEffect(() => {
+        if (!hasTimer) return;
         if (!quest.timer_status || quest.timer_status === 'idle') {
             setTimeLeft(duration);
             setQuestState('idle');
@@ -86,7 +88,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({
     }, []);
 
     useEffect(() => {
-        if (questState !== 'running') {
+        if (questState !== 'running' || !hasTimer) {
             clearTimer();
             return;
         }
@@ -117,10 +119,11 @@ export const QuestCard: React.FC<QuestCardProps> = ({
 
     const handleFinish = () => {
         clearTimer();
+        const timeSaved = hasTimer ? timeLeft : 0;
         if (onResetTimer) onResetTimer(quest.id, duration);
         setShowXP(true);
         setTimeout(() => {
-            onComplete(quest.id);
+            onComplete(quest.id, timeSaved);
         }, 800);
     };
 
@@ -131,7 +134,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({
         if (onResetTimer) onResetTimer(quest.id, duration);
     };
 
-    const progress = ((duration - timeLeft) / duration) * 100;
+    const progress = hasTimer ? ((duration - timeLeft) / duration) * 100 : 100;
     const stateColor = {
         idle: 'var(--color-primary)',
         running: 'var(--color-secondary)',
@@ -209,7 +212,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                         )}
                     </div>
                 )}
-                {!isParent && (questState === 'running' || questState === 'paused') && (
+                {!isParent && hasTimer && (questState === 'running' || questState === 'paused') && (
                     <div style={{
                         position: 'absolute',
                         top: '-10px',
@@ -277,13 +280,19 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                             </div>
                         ) : (
                             <>
-                                {questState === 'idle' && (
+                                {!hasTimer && (
+                                    <button className="neo-button" onClick={handleFinish} style={{ width: '100%', background: 'var(--color-success)' }}>
+                                        ✅ CONCLUIR
+                                    </button>
+                                )}
+
+                                {hasTimer && questState === 'idle' && (
                                     <button className="neo-button" onClick={handleStart} style={{ width: '100%' }}>
                                         ▶ INICIAR
                                     </button>
                                 )}
 
-                                {questState === 'running' && (
+                                {hasTimer && questState === 'running' && (
                                     <>
                                         <div style={{
                                             fontFamily: 'monospace',
@@ -298,20 +307,18 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                             <button className="neo-button" onClick={handlePause} style={{ flex: 1, padding: '4px', fontSize: '12px' }}>
                                                 ⏸ PAUSAR
                                             </button>
-                                            {isParent && (
-                                                <button
-                                                    className="neo-button"
-                                                    onClick={handleFinish}
-                                                    style={{ flex: 1, padding: '4px', fontSize: '10px' }}
-                                                >
-                                                    ✓ VALIDAR
-                                                </button>
-                                            )}
+                                            <button
+                                                className="neo-button"
+                                                onClick={handleFinish}
+                                                style={{ flex: 1, padding: '4px', fontSize: '10px', background: 'var(--color-success)' }}
+                                            >
+                                                ✓ FINALIZAR
+                                            </button>
                                         </div>
                                     </>
                                 )}
 
-                                {questState === 'paused' && (
+                                {hasTimer && questState === 'paused' && (
                                     <>
                                         <div style={{
                                             fontFamily: 'monospace',
@@ -328,7 +335,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                     </>
                                 )}
 
-                                {questState === 'done' && (
+                                {hasTimer && questState === 'done' && (
                                     <button
                                         className="neo-button"
                                         onClick={handleFinish}
@@ -343,7 +350,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                 </div>
 
                 {/* Timer Progress Bar */}
-                {questState !== 'idle' && (
+                {hasTimer && questState !== 'idle' && (
                     <div style={{
                         marginTop: 'var(--space-2)',
                         height: 8,

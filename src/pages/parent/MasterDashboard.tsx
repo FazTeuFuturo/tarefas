@@ -87,7 +87,6 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
         setRewardTitle(''); setRewardDesc(''); setRewardIcon('🎁');
     };
 
-    const childProfiles = leaderboard.filter(p => p.role === 'child');
     const pendingQuests = managedQuests.filter(q => q.status === 'pending');
     const pendingCount = pendingQuests.length;
 
@@ -644,7 +643,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSave={createTask}
-                childProfiles={childProfiles}
+                allProfiles={leaderboard}
                 parentProfile={profile}
             />
             <MissionEditModal
@@ -652,7 +651,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 onClose={() => { setIsEditingModalOpen(false); setEditingQuest(null); }}
                 onSave={async (id, updates) => { await updateTask(id, updates); setIsEditingModalOpen(false); setEditingQuest(null); }}
                 quest={editingQuest}
-                childProfiles={childProfiles}
+                allProfiles={leaderboard}
                 parentProfile={profile}
             />
             <HeroCreateModal

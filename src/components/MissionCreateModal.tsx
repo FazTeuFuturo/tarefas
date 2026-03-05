@@ -5,19 +5,19 @@ import { Modal } from './Modal';
 interface MissionCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (title: string, desc: string, xp: number, fc: number, assigneeId?: string, duration?: number, isRecurring?: boolean) => Promise<void>;
-    childProfiles: LeaderboardEntry[];
+    onSave: (title: string, desc: string, xp: number, fc: number, assigneeId?: string, duration?: number | null, isRecurring?: boolean) => Promise<void>;
+    allProfiles: LeaderboardEntry[];
     parentProfile: { id: string; nome: string } | null;
 }
 
 export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
-    isOpen, onClose, onSave, childProfiles, parentProfile
+    isOpen, onClose, onSave, allProfiles, parentProfile
 }) => {
     const [title, setTitle] = useState('');
     const [desc, setDesc] = useState('');
     const [xp, setXp] = useState(100);
     const [fc, setFc] = useState(50);
-    const [duration, setDuration] = useState(10);
+    const [duration, setDuration] = useState<number | ''>(10);
     const [assigneeId, setAssigneeId] = useState('');
     const [isRecurring, setIsRecurring] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -27,7 +27,7 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        await onSave(title, desc, xp, fc, assigneeId || undefined, duration, isRecurring);
+        await onSave(title, desc, xp, fc, assigneeId || undefined, typeof duration === 'number' ? duration : null, isRecurring);
         // Reset form
         setTitle(''); setDesc(''); setXp(100); setFc(50);
         setDuration(10); setAssigneeId(''); setIsRecurring(false);
@@ -66,17 +66,16 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
                     <div className="flex-col gap-1" style={{ flex: 2 }}>
                         <label className="neo-label">Atribuir a</label>
                         <select className="neo-input" value={assigneeId} onChange={e => setAssigneeId(e.target.value)}>
-                            <option value="">Qualquer herói</option>
-                            {parentProfile && <option value={parentProfile.id}>Eu mesmo ({parentProfile.nome})</option>}
-                            {childProfiles.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                            <option value="">Qualquer membro</option>
+                            {allProfiles.map(c => <option key={c.id} value={c.id}>{c.nome} {c.id === parentProfile?.id ? '(Eu)' : ''}</option>)}
                         </select>
                     </div>
                     <div className="flex-col gap-1" style={{ flex: 1 }}>
                         <label className="neo-label">Duração (min)</label>
                         <input
-                            type="number" className="neo-input"
-                            min={1} value={duration}
-                            onChange={e => setDuration(Number(e.target.value))} required
+                            type="number" className="neo-input" placeholder="Sem tempo"
+                            min={0} value={duration}
+                            onChange={e => setDuration(e.target.value ? Number(e.target.value) : '')}
                         />
                     </div>
                 </div>

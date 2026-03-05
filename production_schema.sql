@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   xp INTEGER DEFAULT 0 NOT NULL,
   nivel INTEGER DEFAULT 1 NOT NULL,
   fc_balance INTEGER DEFAULT 0 NOT NULL,
+  tempo_economizado_total INTEGER DEFAULT 0 NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.tasks (
   assignee_id UUID REFERENCES public.profiles(id),
   created_by UUID REFERENCES public.profiles(id) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  time_saved_seconds INTEGER DEFAULT 0,
   -- Campos de Timer
   timer_status TEXT DEFAULT 'idle', -- idle, running, paused
   timer_remaining_seconds INTEGER,
