@@ -95,11 +95,20 @@ export function useAppData() {
         setMyQuests(prev => prev.filter(q => q.id !== questId));
         setManagedQuests(prev => prev.map(q => q.id === questId ? { ...q, status: 'pending' as const } : q));
 
-        // Update database to PENDING and save time_saved
-        await supabase.from('tasks').update({ status: 'pending', time_saved_seconds: timeSaved }).eq('id', questId);
+        // Get the quest to check if it has an assignee
+        const { data: qData } = await supabase.from('tasks').select('assignee_id').eq('id', questId).single();
+
+        // Update database to PENDING and save time_saved. 
+        // If assignee_id is null, it means it was an "open" quest, so we assign it to the current user who finished it.
+        const updateData: any = { status: 'pending', time_saved_seconds: timeSaved };
+        if (qData && !qData.assignee_id && activeProfile) {
+            updateData.assignee_id = activeProfile.id;
+        }
+
+        await supabase.from('tasks').update(updateData).eq('id', questId);
 
         await fetchAll();
-    }, [fetchAll]);
+    }, [activeProfile, fetchAll]);
 
     const approveQuest = useCallback(async (questId: string) => {
         const quest = managedQuests.find(q => q.id === questId);

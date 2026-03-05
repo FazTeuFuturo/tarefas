@@ -90,9 +90,9 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const pendingQuests = managedQuests.filter(q => q.status === 'pending');
     const pendingCount = pendingQuests.length;
 
-    // All active quests (managed + own), filtered by selected member
+    // All relevant quests (managed + own), filtered by selected member
     const allActiveQuests = [...managedQuests, ...myQuests.filter(q => !managedQuests.find(mq => mq.id === q.id))]
-        .filter(q => q.status === 'active');
+        .filter(q => q.status === 'active' || q.status === 'pending');
     const filteredQuests = filterMember === 'all'
         ? allActiveQuests
         : filterMember === 'unassigned'
@@ -210,7 +210,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease', paddingBottom: 80 }}>
                         <div className="flex items-center justify-between">
                             <h2 style={{ margin: 0 }}>📋 Missões do Clã</h2>
-                            <span style={{ fontWeight: 800, fontSize: 12, opacity: 0.6 }}>{allActiveQuests.length} ativas</span>
+                            <span style={{ fontWeight: 800, fontSize: 12, opacity: 0.6 }}>{allActiveQuests.length} em andamento</span>
                         </div>
 
                         {/* Filtro por membro */}
@@ -249,6 +249,8 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 onStartTimer={startQuestTimer}
                                 onPauseTimer={pauseQuestTimer}
                                 onResetTimer={resetQuestTimer}
+                                onApproveQuest={approveQuest}
+                                onRejectQuest={rejectQuest}
                             />
                         )}
                     </div>

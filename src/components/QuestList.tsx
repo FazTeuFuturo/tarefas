@@ -11,6 +11,8 @@ interface QuestListProps {
     onResetTimer?: (id: string, init: number) => void;
     isParent?: boolean;
     profiles?: any[];
+    onApproveQuest?: (id: string) => void;
+    onRejectQuest?: (id: string) => void;
 }
 
 export const QuestList: React.FC<QuestListProps> = ({
@@ -22,7 +24,9 @@ export const QuestList: React.FC<QuestListProps> = ({
     onPauseTimer,
     onResetTimer,
     isParent = false,
-    profiles = []
+    profiles = [],
+    onApproveQuest,
+    onRejectQuest
 }) => {
     if (quests.length === 0) {
         return (
@@ -48,6 +52,8 @@ export const QuestList: React.FC<QuestListProps> = ({
                         onStartTimer={onStartTimer}
                         onPauseTimer={onPauseTimer}
                         onResetTimer={onResetTimer}
+                        onApprove={onApproveQuest}
+                        onReject={onRejectQuest}
                     />
                 );
             })}

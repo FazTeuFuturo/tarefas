@@ -29,6 +29,8 @@ interface QuestCardProps {
     onStartTimer?: (id: string, rem: number) => void;
     onPauseTimer?: (id: string, rem: number) => void;
     onResetTimer?: (id: string, init: number) => void;
+    onApprove?: (id: string) => void;
+    onReject?: (id: string) => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -46,7 +48,9 @@ export const QuestCard: React.FC<QuestCardProps> = ({
     assigneeName,
     onStartTimer,
     onPauseTimer,
-    onResetTimer
+    onResetTimer,
+    onApprove,
+    onReject
 }) => {
     const duration = (quest.duracao_minutos ?? 0) * 60;
     const hasTimer = duration > 0;
@@ -268,15 +272,34 @@ export const QuestCard: React.FC<QuestCardProps> = ({
 
                     <div className="flex-col items-center gap-2" style={{ minWidth: 90, textAlign: 'center' }}>
                         {quest.status === 'pending' ? (
-                            <div className="neo-box" style={{
-                                background: 'var(--color-warning)',
-                                padding: 'var(--space-2)',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: 800,
-                                textAlign: 'center',
-                                minWidth: 120
-                            }}>
-                                ⏳ EM VALIDAÇÃO
+                            <div className="flex-col gap-2 w-full">
+                                <div className="neo-box" style={{
+                                    background: 'var(--color-warning)',
+                                    padding: 'var(--space-2)',
+                                    fontSize: 'var(--font-size-sm)',
+                                    fontWeight: 800,
+                                    textAlign: 'center',
+                                    minWidth: 120
+                                }}>
+                                    ⏳ EM VALIDAÇÃO
+                                </div>
+                                {isParent && (
+                                    <div className="flex-col gap-1 w-full">
+                                        <button
+                                            className="neo-button"
+                                            onClick={() => onApprove && onApprove(quest.id)}
+                                            style={{ background: 'var(--color-success)', color: '#fff', fontSize: '12px', padding: '6px' }}
+                                        >
+                                            ✅ APROVAR
+                                        </button>
+                                        <button
+                                            onClick={() => onReject && onReject(quest.id)}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 11, color: 'var(--color-danger)', textDecoration: 'underline' }}
+                                        >
+                                            ✕ Recusar
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <>
