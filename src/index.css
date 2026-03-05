@@ -395,7 +395,7 @@ p {
   flex-direction: column;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .mobile-app-container header {

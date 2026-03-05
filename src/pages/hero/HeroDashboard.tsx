@@ -35,20 +35,16 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
         <div className="mobile-app-container">
             <header style={{
                 position: 'sticky', top: 0, zIndex: 100,
-                padding: 'var(--space-2)',
+                padding: 'var(--space-3) var(--space-2)',
                 background: 'var(--color-primary)',
                 borderBottom: '3px solid #000',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                maxWidth: 600, margin: '0 auto'
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
             }}>
                 <div>
                     <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>⚔️ {activeProfile.nome}</h1>
                     <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)', opacity: 0.8 }}>O que vamos conquistar hoje?</p>
                 </div>
                 <div className="flex gap-2 items-center">
-                    <span style={{ fontWeight: 800, fontSize: 'var(--font-size-sm)', background: '#fff', padding: '4px 8px', border: '2px solid #000', borderRadius: 6 }}>
-                        🪙 {activeProfile.fc_balance} FC
-                    </span>
                     {heroExitButton}
                 </div>
             </header>
