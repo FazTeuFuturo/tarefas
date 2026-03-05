@@ -193,51 +193,45 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                             </div>
                         </div>
 
-                        {/* 💎 CONTAINER DE UPGRADE (Fricção Zero) */}
+                        {/* 💎 BANNER DE UPGRADE (Padronizado) */}
                         {isPrimaryParent && currentPlan === 'free' && (
-                            <div className="neo-box overflow-hidden relative" style={{
+                            <div className="neo-box" style={{
                                 padding: 'var(--space-3)',
-                                background: '#fff',
-                                color: '#000',
-                                borderColor: '#000',
-                                borderBottomWidth: '6px'
+                                background: 'var(--color-tertiary-light)',
+                                border: '3px solid var(--color-tertiary)',
+                                marginBottom: 'var(--space-2)'
                             }}>
-                                <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4">
-                                    <div className="bg-yellow-400 p-2 rounded-xl border-4 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                        <span style={{ fontSize: 24 }}>👑</span>
-                                    </div>
-
-                                    <div style={{ flex: 1, textAlign: 'left' }}>
-                                        <h3 className="text-xl font-black uppercase leading-tight" style={{ marginBottom: 2 }}>
-                                            Upgrade Lendário
-                                        </h3>
-                                        <div className="flex flex-wrap gap-x-4 gap-y-1">
-                                            <div className="flex items-center gap-1 font-bold text-xs opacity-70">
-                                                <span>✅</span> 3 Heróis + 2 Mestres
-                                            </div>
-                                            <div className="flex items-center gap-1 font-bold text-xs opacity-70">
-                                                <span>✅</span> Missões ilimitadas
-                                            </div>
+                                <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 13, textTransform: 'uppercase', opacity: 0.6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span>💎</span> ASSINATURA PREMIUM
+                                </h3>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div style={{ flex: 1 }}>
+                                        <p style={{ margin: '0 0 4px', fontWeight: 800, fontSize: 16 }}>Plano Clã Lendário</p>
+                                        <div className="flex flex-col gap-1">
+                                            <p style={{ margin: 0, fontSize: 12, opacity: 0.8, fontWeight: 700 }}>✅ 3 Heróis + 2 Mestres</p>
+                                            <p style={{ margin: 0, fontSize: 12, opacity: 0.8, fontWeight: 700 }}>✅ Missões Infinitas + Recorrentes</p>
                                         </div>
                                     </div>
-
-                                    <button
-                                        onClick={handleStripeUpgrade}
-                                        disabled={isRedirectingStripe}
-                                        className="neo-button whitespace-nowrap"
-                                        style={{
-                                            background: '#facc15',
-                                            color: '#000',
-                                            fontSize: '0.9rem',
-                                            padding: '10px 20px',
-                                            minWidth: '160px'
-                                        }}
-                                    >
-                                        <span className="font-black">
-                                            {isRedirectingStripe ? 'CARREGANDO...' : 'LIBERAR POR R$ 9,90'}
-                                        </span>
-                                    </button>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <p style={{ margin: 0, fontWeight: 900, fontSize: 20, color: '#000' }}>R$ 9,90</p>
+                                        <p style={{ margin: 0, fontSize: 10, fontWeight: 800, opacity: 0.6, textTransform: 'uppercase' }}>Por Mês</p>
+                                    </div>
                                 </div>
+
+                                <button
+                                    onClick={handleStripeUpgrade}
+                                    disabled={isRedirectingStripe}
+                                    className="neo-button w-full"
+                                    style={{
+                                        background: '#facc15',
+                                        color: '#000',
+                                        fontSize: '13px',
+                                        padding: '12px',
+                                        fontWeight: 900
+                                    }}
+                                >
+                                    {isRedirectingStripe ? 'CARREGANDO...' : 'ASSINAR AGORA (MENSAL) ➜'}
+                                </button>
                             </div>
                         )}
                     </div>
@@ -697,7 +691,6 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                             </div>
                         </div>
                     </div>
-
                 )}
             </div>
 
@@ -782,8 +775,6 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 clanId={profile.clan_id}
                 onCreated={() => {
                     setIsHeroCreateOpen(false);
-                    // Força o recarregamento temporário para refletir o novo herói na tela
-                    // A solução ideal de longo prazo seria exportar `fetchAll` no useAppData e executá-lo aqui.
                     window.location.reload();
                 }}
             />
@@ -797,6 +788,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                     window.location.reload();
                 }}
             />
+
             {/* PIN entry for same-device hero switch */}
             {pendingSwitch && (
                 <PinEntry
@@ -905,11 +897,11 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                             <button
                                 type="button"
                                 className="neo-button w-full"
-                                style={{ marginTop: 'var(--space-2)', background: 'var(--color-tertiary)', fontSize: 12, padding: '8px' }}
+                                style={{ marginTop: 'var(--space-2)', background: '#facc15', color: '#000', fontSize: 12, padding: '10px', fontWeight: 900 }}
                                 onClick={handleStripeUpgrade}
                                 disabled={isRedirectingStripe}
                             >
-                                {isRedirectingStripe ? 'CARREGANDO...' : 'Fazer Upgrade — R$ 9,90/mês'}
+                                {isRedirectingStripe ? 'CARREGANDO...' : 'FAZER UPGRADE — R$ 9,90/MÊS (RECORRENTE)'}
                             </button>
                         )}
                     </div>
