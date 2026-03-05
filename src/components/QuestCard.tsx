@@ -256,27 +256,14 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                 {quest.descricao}
                             </p>
                         )}
-                        <div className="flex gap-3 items-center" style={{ marginTop: 'var(--space-1)' }}>
-                            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 800, color: 'var(--color-secondary)' }}>
-                                ⭐ {quest.xp_reward} XP
-                            </span>
-                            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 800, color: 'var(--color-primary)' }}>
-                                🪙 {quest.fc_reward} FC
-                            </span>
-                            <span style={{
-                                fontSize: '10px',
-                                background: 'var(--color-bg)',
-                                padding: '2px 8px',
-                                border: '1px solid var(--color-border)',
-                                fontWeight: 800,
-                                textTransform: 'uppercase'
-                            }}>
-                                👤 {assigneeName || 'Todos'}
-                            </span>
+                        <div className="flex gap-2 items-center" style={{ marginTop: 'var(--space-1)', opacity: 0.9 }}>
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-secondary)' }}>★ {quest.xp_reward} XP</span>
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-primary-dark)' }}>💰 {quest.fc_reward} FC</span>
+                            <span style={{ fontSize: '10px', background: '#eee', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>👤 {assigneeName || 'Todos'}</span>
                         </div>
                     </div>
 
-                    <div className="flex-col items-center gap-2" style={{ minWidth: 120, textAlign: 'center' }}>
+                    <div className="flex-col items-center gap-2" style={{ minWidth: 90, textAlign: 'center' }}>
                         {quest.status === 'pending' ? (
                             <div className="neo-box" style={{
                                 background: 'var(--color-warning)',

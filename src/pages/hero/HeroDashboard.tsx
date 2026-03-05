@@ -35,10 +35,11 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
         <div className="mobile-app-container">
             <header style={{
                 position: 'sticky', top: 0, zIndex: 100,
-                padding: 'var(--space-3) var(--space-2)',
+                padding: 'var(--space-2)',
                 background: 'var(--color-primary)',
                 borderBottom: '3px solid #000',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                maxWidth: 600, margin: '0 auto'
             }}>
                 <div>
                     <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>⚔️ {activeProfile.nome}</h1>
@@ -69,7 +70,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                                     background: filterMember === 'all' ? '#000' : '#fff', color: filterMember === 'all' ? '#fff' : '#000'
                                 }}
                             >Todos</button>
-                            {leaderboard.filter(m => m.role === 'child').map(hero => (
+                            {leaderboard.map(hero => (
                                 <button
                                     key={hero.id}
                                     onClick={() => setFilterMember(hero.id)}
@@ -77,7 +78,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                                         padding: '6px 12px', borderRadius: 20, border: '2px solid #000', fontWeight: 800, fontSize: 12, whiteSpace: 'nowrap',
                                         background: filterMember === hero.id ? '#000' : '#fff', color: filterMember === hero.id ? '#fff' : '#000'
                                     }}
-                                >{hero.id === activeProfile.id ? 'Eu' : hero.nome}</button>
+                                >{hero.id === activeProfile.id ? 'Eu' : (hero.nome || 'Herói')}</button>
                             ))}
                         </div>
 
@@ -178,12 +179,10 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                                         {hero.id === activeProfile.id && (
                                             <button
                                                 onClick={() => setIsSettingsOpen(true)}
-                                                className="neo-button"
                                                 style={{
-                                                    position: 'absolute', top: -12, right: -12, width: '32px', height: '32px',
-                                                    borderRadius: '50%', background: 'var(--color-warning)', color: '#000',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    fontSize: '14px', zIndex: 10, padding: 0, cursor: 'pointer', border: '2px solid #000'
+                                                    position: 'absolute', top: 5, right: 5,
+                                                    background: 'none', border: 'none', cursor: 'pointer',
+                                                    fontSize: 16, padding: 4, opacity: 0.6
                                                 }}
                                                 title="Editar Perfil"
                                             >

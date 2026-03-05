@@ -103,11 +103,11 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
             {/* HEADER */}
             <header style={{
                 position: 'sticky', top: 0, zIndex: 100,
-                padding: 'var(--space-2) var(--space-2)',
-                paddingTop: 'var(--space-3)',
+                padding: 'var(--space-2)',
                 background: 'var(--color-primary)',
                 borderBottom: '3px solid #000',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                maxWidth: 600, margin: '0 auto'
             }}>
                 <div>
                     <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>⚔️ Quartel General</h1>
@@ -227,7 +227,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         transition: 'all 0.1s'
                                     }}
                                 >
-                                    {m.nome}
+                                    {m.nome === 'Todo o Clã' ? 'Todos' : m.nome}
                                 </button>
                             ))}
                         </div>
