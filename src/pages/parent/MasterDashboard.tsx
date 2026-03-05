@@ -102,6 +102,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
         <div className="mobile-app-container">
             {/* HEADER */}
             <header style={{
+                position: 'sticky', top: 0, zIndex: 100,
                 padding: 'var(--space-2) var(--space-2)',
                 paddingTop: 'var(--space-3)',
                 background: 'var(--color-primary)',
@@ -479,36 +480,6 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                                 Nv {hero.nivel} · <span style={{ fontWeight: 700, color: 'var(--color-tertiary-dark)' }}>💰 {hero.fc_balance} FC</span>
                                             </span>
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                            {onSwitchToHero && (
-                                                <button
-                                                    className="neo-button"
-                                                    style={{ width: '100%', background: 'var(--color-primary)', fontSize: 12, padding: '5px 0' }}
-                                                    onClick={() => setPendingSwitch(hero)}
-                                                >▶ Jogar</button>
-                                            )}
-                                            <button
-                                                className="neo-button"
-                                                style={{ width: '100%', background: '#f5f5f5', fontSize: 12, padding: '5px 0' }}
-                                                onClick={async () => {
-                                                    try {
-                                                        const { supabase: sb } = await import('../../lib/supabase');
-                                                        const { data: token, error } = await sb.rpc('generate_hero_invite', { p_hero_id: hero.id });
-                                                        if (error || !token) {
-                                                            alert('Erro ao gerar link. Tente novamente.');
-                                                            return;
-                                                        }
-                                                        const link = `${window.location.origin}?invite=${token}`;
-                                                        navigator.clipboard.writeText(link)
-                                                            .then(() => alert(`✅ Link copiado! Válido por 48h.\n\nEnvie para ${hero.nome} acessar e criar o PIN.\n\n${link}`))
-                                                            .catch(() => alert(link));
-                                                    } catch (err: any) {
-                                                        alert('Erro: ' + err.message);
-                                                    }
-                                                }}
-                                            >🔗 Compartilhar</button>
-
-                                        </div>
                                     </div>
                                 ))}
 
@@ -541,6 +512,22 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 {/* Perfil do Mestre Atual */}
                                 {leaderboard.filter(m => m.role === 'parent').map(master => (
                                     <div key={master.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', opacity: 0.9, textAlign: 'center', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                        {master.id !== profile.id && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setHeroToDelete(master); // Usamos o mesmo state de exclusão
+                                                }}
+                                                className="neo-button"
+                                                style={{
+                                                    position: 'absolute', top: -12, right: -12, width: '32px', height: '32px',
+                                                    borderRadius: '50%', background: 'var(--color-danger)', color: 'white',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    fontSize: '14px', zIndex: 10, padding: 0, cursor: 'pointer'
+                                                }}
+                                                title="Remover Mestre"
+                                            >✕</button>
+                                        )}
                                         {master.id === profile.id && (
                                             <button
                                                 onClick={() => {
@@ -826,7 +813,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         setHeroToDelete(null);
                     }
                 }}
-                title="Expulsar Herói"
+                title="Expulsar Membro"
                 message={`Você tem certeza que deseja remover ${heroToDelete?.nome} do clã? Esta ação não pode ser desfeita.`}
             />
 

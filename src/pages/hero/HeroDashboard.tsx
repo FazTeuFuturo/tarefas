@@ -16,16 +16,25 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
     const { myQuests, managedQuests, leaderboard, updateFCBalance, completeQuest, startQuestTimer, pauseQuestTimer, resetQuestTimer } = useAppData();
     const [view, setView] = useState('quests');
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [filterMember, setFilterMember] = useState<string>(activeProfile?.id || 'all');
 
-    const dailyTasks = myQuests.filter(q => q.is_recurring);
-    const adventureQuests = myQuests.filter(q => !q.is_recurring);
-    const completedDaily = dailyTasks.filter(q => q.status === 'pending' || q.status === 'completed').length;
+    const clanQuests = managedQuests.length > 0 ? managedQuests : myQuests;
+    const filteredQuests = filterMember === 'all'
+        ? clanQuests
+        : filterMember === 'unassigned'
+            ? clanQuests.filter(q => !q.assignee_id)
+            : clanQuests.filter(q => q.assignee_id === filterMember);
+
+    const dailyTasks = filteredQuests.filter(q => q.is_recurring && (q.status === 'active' || q.status === 'pending'));
+    const adventureQuests = filteredQuests.filter(q => !q.is_recurring && (q.status === 'active' || q.status === 'pending'));
+    const completedDaily = filteredQuests.filter(q => q.is_recurring && (q.status === 'pending' || q.status === 'completed')).length;
 
     if (!activeProfile) return <div>Herói não selecionado.</div>;
 
     return (
         <div className="mobile-app-container">
             <header style={{
+                position: 'sticky', top: 0, zIndex: 100,
                 padding: 'var(--space-3) var(--space-2)',
                 background: 'var(--color-primary)',
                 borderBottom: '3px solid #000',
@@ -36,13 +45,6 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                     <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)', opacity: 0.8 }}>O que vamos conquistar hoje?</p>
                 </div>
                 <div className="flex gap-2 items-center">
-                    <button
-                        onClick={() => setIsSettingsOpen(true)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, padding: 0 }}
-                        title="Configurações"
-                    >
-                        ⚙️
-                    </button>
                     <span style={{ fontWeight: 800, fontSize: 'var(--font-size-sm)', background: '#fff', padding: '4px 8px', border: '2px solid #000', borderRadius: 6 }}>
                         🪙 {activeProfile.fc_balance} FC
                     </span>
@@ -58,6 +60,26 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                         <StatusBar level={activeProfile.nivel} xp={activeProfile.xp} xpMax={activeProfile.nivel * 100 + 500} credits={activeProfile.fc_balance} />
 
                         <Inventory />
+
+                        <div className="hide-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginTop: 'var(--space-2)' }}>
+                            <button
+                                onClick={() => setFilterMember('all')}
+                                style={{
+                                    padding: '6px 12px', borderRadius: 20, border: '2px solid #000', fontWeight: 800, fontSize: 12, whiteSpace: 'nowrap',
+                                    background: filterMember === 'all' ? '#000' : '#fff', color: filterMember === 'all' ? '#fff' : '#000'
+                                }}
+                            >Todos</button>
+                            {leaderboard.filter(m => m.role === 'child').map(hero => (
+                                <button
+                                    key={hero.id}
+                                    onClick={() => setFilterMember(hero.id)}
+                                    style={{
+                                        padding: '6px 12px', borderRadius: 20, border: '2px solid #000', fontWeight: 800, fontSize: 12, whiteSpace: 'nowrap',
+                                        background: filterMember === hero.id ? '#000' : '#fff', color: filterMember === hero.id ? '#fff' : '#000'
+                                    }}
+                                >{hero.id === activeProfile.id ? 'Eu' : hero.nome}</button>
+                            ))}
+                        </div>
 
                         {dailyTasks.length > 0 && (
                             <div className="flex-col gap-2">
@@ -105,35 +127,86 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                 {/* ─── CLÃ (Ranking + missões ao vivo) ─── */}
                 {view === 'clan' && (
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
-                        {/* Ranking de Heróis */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-secondary)' }}>
-                            <h2 style={{ margin: '0 0 var(--space-2)' }}>🏆 Ranking de Heróis</h2>
+                        {/* Ranking da Família */}
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-primary)' }}>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                🎖️ Ranking da Família
+                            </h3>
                             <div className="flex-col gap-2">
-                                {leaderboard.filter(m => m.role === 'child').map((member, idx) => (
-                                    <div key={member.id} className="flex items-center gap-2 neo-box"
-                                        style={{ padding: 'var(--space-2)', background: member.id === activeProfile.id ? '#fff' : 'rgba(255,255,255,0.7)' }}>
-                                        <span style={{ fontWeight: 800, fontSize: idx === 0 ? 24 : 18, width: 32, textAlign: 'center' }}>
+                                {leaderboard.map((member, idx) => (
+                                    <div key={member.id} className="neo-box flex items-center gap-3"
+                                        style={{ padding: 'var(--space-2)', background: '#fff' }}>
+                                        <span style={{ fontWeight: 800, fontSize: idx === 0 ? 26 : 20, width: 34, textAlign: 'center', flexShrink: 0 }}>
                                             {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
                                         </span>
                                         <img
-                                            src={member.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.nome}`}
-                                            style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #000' }}
+                                            src={/^https?:\/\//.test(member.avatar || '') ? member.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.nome}`}
+                                            style={{ width: 38, height: 38, borderRadius: '50%', border: '3px solid #000', flexShrink: 0, objectFit: 'cover' }}
                                             alt={member.nome}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.nome}`; }}
                                         />
-                                        <div style={{ flex: 1 }}>
-                                            <strong style={{ fontSize: 'var(--font-size-sm)' }}>
-                                                {member.nome}
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div className="flex items-center gap-2">
+                                                <strong style={{ fontSize: 13 }}>{member.nome}</strong>
                                                 {member.id === activeProfile.id && (
-                                                    <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, background: '#000', color: '#fff', padding: '1px 5px', borderRadius: 3 }}>VOCÊ</span>
+                                                    <span style={{ fontSize: 9, fontWeight: 900, background: '#000', color: '#fff', padding: '1px 5px', borderRadius: 3, letterSpacing: '0.5px' }}>
+                                                        VOCÊ
+                                                    </span>
                                                 )}
-                                            </strong>
+                                            </div>
                                             <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
                                                 <span style={{ fontSize: 11, fontWeight: 700 }}>Nv {member.nivel}</span>
                                                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-tertiary)' }}>⭐ {member.xp} XP</span>
+                                                <span style={{ fontSize: 11, fontWeight: 700 }}>🪙 {member.fc_balance} FC</span>
+                                            </div>
+                                            {/* XP progress bar */}
+                                            <div style={{ marginTop: 4, height: 5, background: 'rgba(0,0,0,0.1)', borderRadius: 3, border: '1px solid rgba(0,0,0,0.15)', overflow: 'hidden' }}>
+                                                <div style={{ height: '100%', background: 'var(--color-tertiary)', width: `${Math.min(100, (member.xp / (member.nivel * 100 + 500)) * 100)}%`, borderRadius: 3 }} />
                                             </div>
                                         </div>
-                                        <div style={{ width: 60, height: 6, background: 'rgba(0,0,0,0.1)', borderRadius: 3, border: '1px solid #000', overflow: 'hidden' }}>
-                                            <div style={{ height: '100%', background: 'var(--color-tertiary)', width: `${Math.min(100, (member.xp / (member.nivel * 100 + 500)) * 100)}%` }} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Heróis do Clã */}
+                        <div>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>⚔️ Heróis do Clã</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                                {leaderboard.filter(m => m.role === 'child').map(hero => (
+                                    <div key={hero.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, background: '#fff' }}>
+                                        {hero.id === activeProfile.id && (
+                                            <button
+                                                onClick={() => setIsSettingsOpen(true)}
+                                                className="neo-button"
+                                                style={{
+                                                    position: 'absolute', top: -12, right: -12, width: '32px', height: '32px',
+                                                    borderRadius: '50%', background: 'var(--color-warning)', color: '#000',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    fontSize: '14px', zIndex: 10, padding: 0, cursor: 'pointer', border: '2px solid #000'
+                                                }}
+                                                title="Editar Perfil"
+                                            >
+                                                ✏️
+                                            </button>
+                                        )}
+                                        {/^https?:\/\//.test(hero.avatar || '') ? (
+                                            <img
+                                                src={hero.avatar}
+                                                style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #000', margin: '0 auto', display: 'block', objectFit: 'cover' }}
+                                                alt={hero.nome}
+                                                onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero.nome}`; }}
+                                            />
+                                        ) : (
+                                            <div style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #000', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, background: 'var(--color-primary-light)' }}>
+                                                {hero.avatar || '🦸'}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <strong style={{ fontSize: 13, display: 'block' }}>{hero.nome}</strong>
+                                            <span style={{ fontSize: 11, opacity: 0.8 }}>
+                                                Nv {hero.nivel} · <span style={{ fontWeight: 700, color: 'var(--color-tertiary-dark)' }}>💰 {hero.fc_balance} FC</span>
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
@@ -141,47 +214,22 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                         </div>
 
                         {/* Mestres do Clã */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)' }}>
-                            <h2 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🧙‍♂️ Mestres do Clã</h2>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                        <div style={{ marginTop: 'var(--space-2)' }}>
+                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🧙‍♂️ Mestres</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                                 {leaderboard.filter(m => m.role === 'parent').map(master => (
-                                    <div key={master.id} className="flex flex-col items-center gap-1 neo-box" style={{ padding: 'var(--space-2)', background: '#fff', textAlign: 'center' }}>
+                                    <div key={master.id} className="neo-box" style={{ padding: 'var(--space-3)', opacity: 0.9, textAlign: 'center', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                         <img
-                                            src={master.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${master.nome}`}
-                                            style={{ width: 40, height: 40, borderRadius: '50%', border: '2px solid #000' }}
+                                            src={/^https?:\/\//.test(master.avatar || '') ? master.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${master.nome}`}
+                                            style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid #000', margin: '0 auto 8px', display: 'block', objectFit: 'cover' }}
                                             alt={master.nome}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${master.nome}`; }}
                                         />
-                                        <span style={{ fontWeight: 800, fontSize: 12 }}>{master.nome}</span>
+                                        <p style={{ margin: '0', fontWeight: 800, fontSize: 13, lineHeight: 1.2 }}>{master.nome}</p>
+                                        <p style={{ margin: 0, fontSize: 11, opacity: 0.6 }}>Mestre</p>
                                     </div>
                                 ))}
                             </div>
-                        </div>
-
-                        {/* Missões ao vivo */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)' }}>
-                            <h2 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>⚡ Missões em Andamento</h2>
-                            {managedQuests.filter(q => q.status === 'active' && q.assignee_id !== activeProfile.id).length === 0
-                                ? <p style={{ margin: 0, opacity: 0.5, fontSize: 'var(--font-size-sm)' }}>Nenhum colega em missão agora.</p>
-                                : managedQuests.filter(q => q.status === 'active' && q.assignee_id !== activeProfile.id).map(q => {
-                                    const hero = leaderboard.find(p => p.id === q.assignee_id);
-                                    return (
-                                        <div key={q.id} className="flex items-center gap-2" style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                                            <img
-                                                src={hero?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${hero?.nome || 'hero'}`}
-                                                style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #000', flexShrink: 0 }}
-                                                alt={hero?.nome}
-                                            />
-                                            <div style={{ flex: 1 }}>
-                                                <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)' }}>{q.titulo}</p>
-                                                <p style={{ margin: 0, fontSize: 11, opacity: 0.6 }}>{hero?.nome || 'Alguém'}</p>
-                                            </div>
-                                            <span style={{ fontSize: 11, fontWeight: 800, opacity: q.timer_status === 'running' ? 1 : 0.4, color: q.timer_status === 'running' ? 'var(--color-success)' : 'var(--color-text)' }}>
-                                                {q.timer_status === 'running' ? '⏱️ EM CURSO' : q.timer_status === 'paused' ? '⏸️ PAUSADO' : '💤'}
-                                            </span>
-                                        </div>
-                                    );
-                                })
-                            }
                         </div>
                     </div>
                 )}

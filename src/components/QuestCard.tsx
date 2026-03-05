@@ -124,6 +124,13 @@ export const QuestCard: React.FC<QuestCardProps> = ({
         }, 800);
     };
 
+    const handleAbandon = () => {
+        clearTimer();
+        setQuestState('idle');
+        setTimeLeft(duration);
+        if (onResetTimer) onResetTimer(quest.id, duration);
+    };
+
     const progress = ((duration - timeLeft) / duration) * 100;
     const stateColor = {
         idle: 'var(--color-primary)',
@@ -182,6 +189,8 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                 onClick={() => setIsDeleteModalOpen(true)}
                                 style={{
                                     background: 'var(--color-danger)',
+                                    color: 'white',
+                                    fontWeight: 800,
                                     border: '2px solid var(--color-border)',
                                     borderRadius: '50%',
                                     width: '28px',
@@ -195,9 +204,40 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                 }}
                                 title="Excluir Missão"
                             >
-                                🗑️
+                                ✕
                             </button>
                         )}
+                    </div>
+                )}
+                {!isParent && (questState === 'running' || questState === 'paused') && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '-10px',
+                        right: '10px',
+                        display: 'flex',
+                        zIndex: 10
+                    }}>
+                        <button
+                            onClick={handleAbandon}
+                            style={{
+                                background: 'var(--color-warning)',
+                                color: 'black',
+                                fontWeight: 800,
+                                border: '2px solid var(--color-border)',
+                                borderRadius: '50%',
+                                width: '28px',
+                                height: '28px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: 0,
+                                boxShadow: '2px 2px 0 var(--color-border)'
+                            }}
+                            title="Desistir da Missão"
+                        >
+                            ✕
+                        </button>
                     </div>
                 )}
                 {showXP && (
