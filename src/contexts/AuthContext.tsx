@@ -76,18 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setProfile(p);
 
                     const savedActiveProfileId = localStorage.getItem('fq_active_profile_id');
-                    if (savedActiveProfileId && savedActiveProfileId !== session.user.id) {
+                    if (savedActiveProfileId) {
                         const savedProfile = await loadProfile(savedActiveProfileId);
                         if (savedProfile) {
                             setActiveProfile(savedProfile);
-                            setIsHeroMode(true);
+                            setIsHeroMode(savedProfile.role === 'child');
                         } else {
+                            // Se falhar ao carregar o saved, fallback para o principal
                             setActiveProfile(p);
-                            setIsHeroMode(false);
+                            setIsHeroMode(p?.role === 'child' || false);
                         }
-                    } else if (savedActiveProfileId === session.user.id) {
-                        setActiveProfile(p);
-                        setIsHeroMode(false);
                     } else {
                         // Se não tem nada salvo, começa na tela de seleção de perfis (Netflix)
                         setActiveProfile(null);

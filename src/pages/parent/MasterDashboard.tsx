@@ -41,6 +41,10 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [pendingSwitch, setPendingSwitch] = useState<any | null>(null);
     const [heroToDelete, setHeroToDelete] = useState<any | null>(null);
 
+    // Identifica se o Mestre atual é o dono do Clã (Primary Parent)
+    // Um Parent secundário tem o campo created_by preenchido (que aponta para outro Parent) e/ou id diferente do clan_id
+    const isPrimaryParent = profile?.role === 'parent' && (!profile?.created_by || profile?.id === profile?.clan_id);
+
     const [isEditMasterOpen, setIsEditMasterOpen] = useState(false);
     const [editMasterName, setEditMasterName] = useState('');
     const [editMasterBirthDate, setEditMasterBirthDate] = useState('');
@@ -433,33 +437,35 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 {leaderboard.filter(m => m.role === 'child').map(hero => (
                                     <div key={hero.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, background: '#fff' }}>
                                         {/* Botão Remover Herói */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setHeroToDelete(hero);
-                                            }}
-                                            className="neo-button"
-                                            style={{
-                                                position: 'absolute',
-                                                top: -12,
-                                                right: -12,
-                                                width: '32px',
-                                                height: '32px',
-                                                borderRadius: '50%',
-                                                background: 'var(--color-danger)',
-                                                color: 'white',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '14px',
-                                                zIndex: 10,
-                                                padding: 0,
-                                                cursor: 'pointer'
-                                            }}
-                                            title="Remover Herói"
-                                        >
-                                            ✕
-                                        </button>
+                                        {isPrimaryParent && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setHeroToDelete(hero);
+                                                }}
+                                                className="neo-button"
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: -12,
+                                                    right: -12,
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '50%',
+                                                    background: 'var(--color-danger)',
+                                                    color: 'white',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '14px',
+                                                    zIndex: 10,
+                                                    padding: 0,
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Remover Herói"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
                                         {/^https?:\/\//.test(hero.avatar || '') ? (
                                             <img
                                                 src={hero.avatar}
@@ -482,24 +488,26 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 ))}
 
                                 {/* Card de adicionar novo herói */}
-                                <button
-                                    onClick={() => setIsHeroCreateOpen(true)}
-                                    style={{
-                                        border: '3px dashed #bbb',
-                                        borderRadius: 12, background: 'transparent',
-                                        cursor: 'pointer', padding: 'var(--space-3)',
-                                        display: 'flex', flexDirection: 'column',
-                                        alignItems: 'center', justifyContent: 'center',
-                                        gap: 8, minHeight: 160,
-                                        transition: 'border-color 0.15s, background 0.15s',
-                                        color: '#888',
-                                    }}
-                                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.background = '#f9f9f9'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#bbb'; e.currentTarget.style.background = 'transparent'; }}
-                                >
-                                    <span style={{ fontSize: 32, display: 'block' }}>＋</span>
-                                    <span style={{ fontSize: 13, fontWeight: 800 }}>Novo Herói</span>
-                                </button>
+                                {isPrimaryParent && (
+                                    <button
+                                        onClick={() => setIsHeroCreateOpen(true)}
+                                        style={{
+                                            border: '3px dashed #bbb',
+                                            borderRadius: 12, background: 'transparent',
+                                            cursor: 'pointer', padding: 'var(--space-3)',
+                                            display: 'flex', flexDirection: 'column',
+                                            alignItems: 'center', justifyContent: 'center',
+                                            gap: 8, minHeight: 160,
+                                            transition: 'border-color 0.15s, background 0.15s',
+                                            color: '#888',
+                                        }}
+                                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.background = '#f9f9f9'; }}
+                                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#bbb'; e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                        <span style={{ fontSize: 32, display: 'block' }}>＋</span>
+                                        <span style={{ fontSize: 13, fontWeight: 800 }}>Novo Herói</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -510,7 +518,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 {/* Perfil do Mestre Atual */}
                                 {leaderboard.filter(m => m.role === 'parent').map(master => (
                                     <div key={master.id} className="neo-box" style={{ position: 'relative', padding: 'var(--space-3)', opacity: 0.9, textAlign: 'center', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                        {master.id !== profile.id && (
+                                        {master.id !== profile.id && isPrimaryParent && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -555,23 +563,25 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 ))}
 
                                 {/* Botão de Adicionar Mestre */}
-                                <button
-                                    onClick={() => setIsMasterCreateOpen(true)}
-                                    style={{
-                                        border: '3px dashed var(--color-primary)',
-                                        borderRadius: 12, background: 'transparent',
-                                        cursor: 'pointer', padding: 'var(--space-3)',
-                                        display: 'flex', flexDirection: 'column',
-                                        alignItems: 'center', justifyContent: 'center',
-                                        gap: 6, transition: 'all 0.2s',
-                                        minHeight: 120
-                                    }}
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.borderColor = '#000'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
-                                >
-                                    <span style={{ fontSize: 24, display: 'block' }}>🤝</span>
-                                    <span style={{ fontSize: 13, fontWeight: 800 }}>Adicionar Mestre</span>
-                                </button>
+                                {isPrimaryParent && (
+                                    <button
+                                        onClick={() => setIsMasterCreateOpen(true)}
+                                        style={{
+                                            border: '3px dashed var(--color-primary)',
+                                            borderRadius: 12, background: 'transparent',
+                                            cursor: 'pointer', padding: 'var(--space-3)',
+                                            display: 'flex', flexDirection: 'column',
+                                            alignItems: 'center', justifyContent: 'center',
+                                            gap: 6, transition: 'all 0.2s',
+                                            minHeight: 120
+                                        }}
+                                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.borderColor = '#000'; }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+                                    >
+                                        <span style={{ fontSize: 24, display: 'block' }}>🤝</span>
+                                        <span style={{ fontSize: 13, fontWeight: 800 }}>Adicionar Mestre</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
