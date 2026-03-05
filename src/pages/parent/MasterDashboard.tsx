@@ -193,64 +193,51 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                             </div>
                         </div>
 
-                        {/* 💎 CONTAINER DE UPGRADE PREMIUM (Fricção Zero) */}
+                        {/* 💎 CONTAINER DE UPGRADE (Fricção Zero) */}
                         {isPrimaryParent && currentPlan === 'free' && (
                             <div className="neo-box overflow-hidden relative" style={{
-                                padding: 'var(--space-4)',
-                                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                                color: 'white',
+                                padding: 'var(--space-3)',
+                                background: '#fff',
+                                color: '#000',
                                 borderColor: '#000',
-                                borderBottomWidth: '8px'
+                                borderBottomWidth: '6px'
                             }}>
-                                <div className="relative z-10">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="bg-yellow-400 p-2 rounded-xl border-4 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]">
-                                            <span style={{ fontSize: 32 }}>👑</span>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-black uppercase italic leading-tight" style={{ textShadow: '2px 2px 0px #000' }}>
-                                                Upgrade Lendário
-                                            </h3>
-                                            <p className="text-sm font-bold opacity-90 uppercase tracking-widest text-yellow-300">
-                                                Apenas R$ 9,90/mês
-                                            </p>
-                                        </div>
+                                <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4">
+                                    <div className="bg-yellow-400 p-2 rounded-xl border-4 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                        <span style={{ fontSize: 24 }}>👑</span>
                                     </div>
 
-                                    <div className="flex flex-col gap-2 mb-6">
-                                        <div className="flex items-center gap-2 font-bold text-sm">
-                                            <span>✅</span> 3 Heróis + 2 Mestres
-                                        </div>
-                                        <div className="flex items-center gap-2 font-bold text-sm">
-                                            <span>✅</span> Missões ilimitadas
-                                        </div>
-                                        <div className="flex items-center gap-2 font-bold text-sm">
-                                            <span>✅</span> Mural de Performance
+                                    <div style={{ flex: 1, textAlign: 'left' }}>
+                                        <h3 className="text-xl font-black uppercase leading-tight" style={{ marginBottom: 2 }}>
+                                            Upgrade Lendário
+                                        </h3>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                            <div className="flex items-center gap-1 font-bold text-xs opacity-70">
+                                                <span>✅</span> 3 Heróis + 2 Mestres
+                                            </div>
+                                            <div className="flex items-center gap-1 font-bold text-xs opacity-70">
+                                                <span>✅</span> Missões ilimitadas
+                                            </div>
                                         </div>
                                     </div>
 
                                     <button
                                         onClick={handleStripeUpgrade}
                                         disabled={isRedirectingStripe}
-                                        className="neo-button w-full flex items-center justify-center gap-2 group"
+                                        className="neo-button whitespace-nowrap"
                                         style={{
                                             background: '#facc15',
                                             color: '#000',
-                                            fontSize: '1.1rem',
-                                            padding: '16px'
+                                            fontSize: '0.9rem',
+                                            padding: '10px 20px',
+                                            minWidth: '160px'
                                         }}
                                     >
                                         <span className="font-black">
-                                            {isRedirectingStripe ? 'CARREGANDO...' : 'LIBERAR AGORA ➜'}
+                                            {isRedirectingStripe ? 'CARREGANDO...' : 'LIBERAR POR R$ 9,90'}
                                         </span>
                                     </button>
                                 </div>
-
-                                {/* Elementos Visuais de Fundo */}
-                                <div className="absolute top-0 right-0 p-4 opacity-10 font-black text-6xl italic select-none">
-                                    STRIPE
-                                </div>
-                                <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl"></div>
                             </div>
                         )}
                     </div>
