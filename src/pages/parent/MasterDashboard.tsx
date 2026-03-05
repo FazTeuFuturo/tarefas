@@ -193,25 +193,64 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                             </div>
                         </div>
 
-                        {/* Banner de Upgrade Fricção Zero (Stripe) */}
+                        {/* 💎 CONTAINER DE UPGRADE PREMIUM (Fricção Zero) */}
                         {isPrimaryParent && currentPlan === 'free' && (
-                            <div className="bg-indigo-600 border-4 border-slate-900 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-white mb-8 relative overflow-hidden group">
+                            <div className="neo-box overflow-hidden relative" style={{
+                                padding: 'var(--space-4)',
+                                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                color: 'white',
+                                borderColor: '#000',
+                                borderBottomWidth: '8px'
+                            }}>
                                 <div className="relative z-10">
-                                    <h3 className="text-2xl font-black uppercase italic mb-2">🚀 Torne-se um Clã Lendário!</h3>
-                                    <p className="font-bold mb-4 opacity-90 max-w-lg">
-                                        Libere limites de heróis, crie missões infinitas e tenha acesso ao Mural de Performance exclusivo por apenas <span className="text-yellow-300 underline font-black">R$ 9,90/mês</span>.
-                                    </p>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-yellow-400 p-2 rounded-xl border-4 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]">
+                                            <span style={{ fontSize: 32 }}>👑</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-black uppercase italic leading-tight" style={{ textShadow: '2px 2px 0px #000' }}>
+                                                Upgrade Lendário
+                                            </h3>
+                                            <p className="text-sm font-bold opacity-90 uppercase tracking-widest text-yellow-300">
+                                                Apenas R$ 9,90/mês
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 mb-6">
+                                        <div className="flex items-center gap-2 font-bold text-sm">
+                                            <span>✅</span> 3 Heróis + 2 Mestres
+                                        </div>
+                                        <div className="flex items-center gap-2 font-bold text-sm">
+                                            <span>✅</span> Missões ilimitadas
+                                        </div>
+                                        <div className="flex items-center gap-2 font-bold text-sm">
+                                            <span>✅</span> Mural de Performance
+                                        </div>
+                                    </div>
+
                                     <button
                                         onClick={handleStripeUpgrade}
                                         disabled={isRedirectingStripe}
-                                        className="bg-white text-indigo-600 border-4 border-slate-900 px-6 py-3 font-black uppercase hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all disabled:opacity-50"
+                                        className="neo-button w-full flex items-center justify-center gap-2 group"
+                                        style={{
+                                            background: '#facc15',
+                                            color: '#000',
+                                            fontSize: '1.1rem',
+                                            padding: '16px'
+                                        }}
                                     >
-                                        {isRedirectingStripe ? 'Redirecionando...' : 'Fazer Upgrade Agora ➜'}
+                                        <span className="font-black">
+                                            {isRedirectingStripe ? 'CARREGANDO...' : 'LIBERAR AGORA ➜'}
+                                        </span>
                                     </button>
                                 </div>
-                                <div className="absolute -right-4 -bottom-4 text-9xl font-black opacity-10 select-none group-hover:scale-110 transition-transform">
+
+                                {/* Elementos Visuais de Fundo */}
+                                <div className="absolute top-0 right-0 p-4 opacity-10 font-black text-6xl italic select-none">
                                     STRIPE
                                 </div>
+                                <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl"></div>
                             </div>
                         )}
                     </div>
@@ -880,9 +919,10 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 type="button"
                                 className="neo-button w-full"
                                 style={{ marginTop: 'var(--space-2)', background: 'var(--color-tertiary)', fontSize: 12, padding: '8px' }}
-                                onClick={() => alert('Em breve integração com checkout do Stripe/Mercado Pago para o plano de R$ 9,90!')}
+                                onClick={handleStripeUpgrade}
+                                disabled={isRedirectingStripe}
                             >
-                                Fazer Upgrade — R$ 9,90/mês
+                                {isRedirectingStripe ? 'CARREGANDO...' : 'Fazer Upgrade — R$ 9,90/mês'}
                             </button>
                         )}
                     </div>

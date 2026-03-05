@@ -13,6 +13,8 @@ serve(async (req) => {
 
     try {
         const authHeader = req.headers.get('Authorization');
+        console.log('Auth Header presente:', !!authHeader);
+
         if (!authHeader) throw new Error('Cabeçalho de autorização ausente');
 
         const supabase = createClient(
@@ -22,7 +24,12 @@ serve(async (req) => {
         );
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error('Não autorizado');
+        console.log('Usuário autenticado:', user?.id || 'nenhum');
+
+        if (userError || !user) {
+            console.error('Erro de autorização:', userError);
+            throw new Error('Não autorizado: Sessão inválida ou expirada');
+        }
 
         // 1. Buscar se o usuário já tem um stripe_customer_id
         const { data: profile } = await supabase
