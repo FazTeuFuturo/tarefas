@@ -30,13 +30,9 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
 
                 <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
                     <button
-                        className="neo-button"
+                        className="neo-button neo-button--ghost"
                         onClick={onClose}
-                        style={{
-                            flex: 1,
-                            background: '#e5e7eb',
-                            fontSize: '0.9rem'
-                        }}
+                        style={{ flex: 1, fontSize: '0.9rem' }}
                     >
                         Cancelar
                     </button>

@@ -298,17 +298,27 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 {/* ────── 🍺 TAVERNA ────── */}
                 {view === 'tavern' && (
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
-                        <h2 style={{ margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>🍺 Gerenciar Taverna</h2>
 
-                        {/* Criar prêmio */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)' }}>
-                            {!isCreatingReward ? (
-                                <button className="neo-button w-full" style={{ background: 'var(--color-secondary)' }} onClick={() => setIsCreatingReward(true)}>
-                                    + NOVO PRÊMIO
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 style={{ margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', textShadow: '0 0 10px rgba(245,166,35,0.4)' }}>🍺 Taverna</h2>
+                                <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>
+                                    {rewards.length} prêmio{rewards.length !== 1 ? 's' : ''} · {redemptions.length} resgate{redemptions.length !== 1 ? 's' : ''}
+                                </p>
+                            </div>
+                            {!isCreatingReward && (
+                                <button className="neo-button" style={{ fontSize: 'var(--font-size-sm)', padding: '8px 14px' }} onClick={() => setIsCreatingReward(true)}>
+                                    ＋ Novo Prêmio
                                 </button>
-                            ) : (
+                            )}
+                        </div>
+
+                        {/* Formulário de criação */}
+                        {isCreatingReward && (
+                            <div className="neo-box" style={{ padding: 'var(--space-3)', borderColor: 'var(--color-border-gold)', boxShadow: 'var(--neo-shadow), var(--glow-gold)' }}>
+                                <h3 style={{ margin: '0 0 var(--space-2)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', fontSize: 'var(--font-size-base)' }}>🎁 Novo Prêmio</h3>
                                 <form onSubmit={handleCreateReward} className="flex-col gap-2">
-                                    <h3 style={{ margin: '0 0 var(--space-1)' }}>🎁 Novo Prêmio</h3>
                                     <input type="text" className="neo-input" placeholder="Nome do prêmio" value={rewardTitle} onChange={e => setRewardTitle(e.target.value)} required />
                                     <textarea className="neo-input" rows={2} placeholder="Descrição (opcional)..." value={rewardDesc} onChange={e => setRewardDesc(e.target.value)} />
                                     <div className="flex gap-2">
@@ -322,47 +332,50 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button type="submit" className="neo-button" style={{ flex: 2, background: 'var(--color-primary)' }}>SALVAR</button>
-                                        <button type="button" className="neo-button" style={{ flex: 1, background: 'var(--color-danger)', color: '#fff' }} onClick={() => setIsCreatingReward(false)}>X</button>
+                                        <button type="submit" className="neo-button" style={{ flex: 2 }}>✦ SALVAR PRÊMIO</button>
+                                        <button type="button" className="neo-button neo-button--ghost" style={{ flex: 1 }} onClick={() => setIsCreatingReward(false)}>Cancelar</button>
                                     </div>
                                 </form>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
-                        {/* Lista de prêmios */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)' }}>
-                            <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🏺 Itens ({rewards.length})</h3>
-                            {rewards.length === 0
-                                ? <p style={{ margin: 0, opacity: 0.5 }}>Nenhum item cadastrado.</p>
-                                : (
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-2)' }}>
-                                        {rewards.map(r => <RewardCard key={r.id} reward={r} showDelete onDelete={deleteReward} />)}
-                                    </div>
-                                )
-                            }
-                        </div>
+                        {/* Grid de prêmios */}
+                        {rewards.length === 0 ? (
+                            <div className="neo-box" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
+                                <span style={{ fontSize: 40, display: 'block', marginBottom: 'var(--space-2)' }}>🏺</span>
+                                <p style={{ margin: 0, color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>Nenhum prêmio cadastrado ainda.</p>
+                                <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Clique em "＋ Novo Prêmio" para começar.</p>
+                            </div>
+                        ) : (
+                            <div>
+                                <p style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    🏺 {rewards.length} Prêmio{rewards.length !== 1 ? 's' : ''} disponíveis
+                                </p>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-3)', paddingTop: 14 }}>
+                                    {rewards.map(r => <RewardCard key={r.id} reward={r} showDelete onDelete={deleteReward} />)}
+                                </div>
+                            </div>
+                        )}
 
-                        {/* ─── Dar Bônus Avulso ─── */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-surface-alt)', borderColor: 'var(--color-border)' }}>
-                            <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-2)' }}>
-                                <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>💰 Dar Bônus Avulso</h3>
+                        {/* Dar Bônus Avulso */}
+                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-surface-alt)' }}>
+                            <div className="flex items-center justify-between" style={{ marginBottom: isBonusOpen ? 'var(--space-2)' : 0 }}>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>💰 Dar Bônus</h3>
+                                    {!isBonusOpen && <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Credite FC ou XP diretamente a um herói</p>}
+                                </div>
                                 <button
-                                    className="neo-button"
-                                    style={{ fontSize: 12, padding: '4px 12px', background: isBonusOpen ? 'var(--color-danger)' : 'var(--color-primary)', color: isBonusOpen ? '#fff' : '#000' }}
+                                    className={`neo-button${isBonusOpen ? ' neo-button--ghost' : ''}`}
+                                    style={{ fontSize: 12, padding: '6px 12px' }}
                                     onClick={() => setIsBonusOpen(v => !v)}
-                                >{isBonusOpen ? 'Cancelar' : '+ Dar Bônus'}</button>
+                                >{isBonusOpen ? '✕ Cancelar' : '＋ Dar Bônus'}</button>
                             </div>
 
-                            {isBonusOpen ? (
+                            {isBonusOpen && (
                                 <form onSubmit={handleGiveBonus} className="flex-col gap-2">
                                     <div>
                                         <label className="neo-label">Herói</label>
-                                        <select
-                                            className="neo-input"
-                                            value={bonusHeroId}
-                                            onChange={e => setBonusHeroId(e.target.value)}
-                                            required
-                                        >
+                                        <select className="neo-input" value={bonusHeroId} onChange={e => setBonusHeroId(e.target.value)} required>
                                             <option value="">Selecione um herói...</option>
                                             {leaderboard.filter(p => p.role === 'child').map(h => (
                                                 <option key={h.id} value={h.id}>{h.nome}</option>
@@ -371,11 +384,11 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                     </div>
                                     <div className="flex gap-2">
                                         <div style={{ flex: 1 }}>
-                                            <label className="neo-label">🪙 FC a creditar</label>
+                                            <label className="neo-label">🪙 FC</label>
                                             <input type="number" min={0} max={9999} className="neo-input" value={bonusFC} onChange={e => setBonusFC(Number(e.target.value))} />
                                         </div>
                                         <div style={{ flex: 1 }}>
-                                            <label className="neo-label">⭐ XP a creditar</label>
+                                            <label className="neo-label">⭐ XP</label>
                                             <input type="number" min={0} max={9999} className="neo-input" value={bonusXP} onChange={e => setBonusXP(Number(e.target.value))} />
                                         </div>
                                     </div>
@@ -383,28 +396,27 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         type="submit"
                                         className="neo-button"
                                         disabled={bonusSending || !bonusHeroId || (bonusFC === 0 && bonusXP === 0)}
-                                        style={{ background: 'var(--color-primary)' }}
                                     >
-                                        {bonusSending ? 'Enviando...' : '🎉 Confirmar Bônus'}
+                                        {bonusSending ? '⏳ Enviando...' : '🎉 Confirmar Bônus'}
                                     </button>
                                 </form>
-                            ) : (
-                                <p style={{ margin: 0, opacity: 0.5, fontSize: 13 }}>Credite FC ou XP diretamente para um herói, sem precisar de uma missão.</p>
                             )}
                         </div>
 
                         {/* Últimos resgates */}
                         {redemptions.length > 0 && (
-                            <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-surface)', borderColor: 'var(--color-border-gold)' }}>
-                                <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)' }}>🛒 Últimos Resgates</h3>
+                            <div className="neo-box" style={{ padding: 'var(--space-3)', borderColor: 'var(--color-border-gold)' }}>
+                                <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>🛒 Últimos Resgates</h3>
                                 {redemptions.slice(0, 8).map(r => (
-                                    <div key={r.id} className="flex justify-between items-center" style={{ padding: '6px 0', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-                                        <span style={{ fontSize: 13 }}>
-                                            <strong>{r.profiles?.nome}</strong>
-                                            <span style={{ opacity: 0.5, margin: '0 6px' }}>→</span>
-                                            {r.rewards?.titulo}
-                                        </span>
-                                        <span style={{ fontWeight: 800, color: 'var(--color-danger)', fontSize: 13 }}>-{r.cost_fc}FC</span>
+                                    <div key={r.id} className="flex justify-between items-center" style={{ padding: '8px 0', borderBottom: '1px solid var(--color-border-subtle)' }}>
+                                        <div className="flex items-center gap-2">
+                                            <span style={{ fontSize: 18 }}>{r.rewards?.icon_type ?? '🎁'}</span>
+                                            <div>
+                                                <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', fontWeight: 800 }}>{r.rewards?.titulo}</p>
+                                                <p style={{ margin: 0, fontSize: 10, color: 'var(--color-text-muted)' }}>{r.profiles?.nome}</p>
+                                            </div>
+                                        </div>
+                                        <span style={{ fontWeight: 800, color: 'var(--color-primary-light)', fontSize: 'var(--font-size-xs)', background: 'var(--color-overlay-gold)', padding: '2px 8px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--color-border-gold)' }}>-{r.cost_fc} FC</span>
                                     </div>
                                 ))}
                             </div>
@@ -520,7 +532,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         <div>
                                             <strong style={{ fontSize: 13, display: 'block' }}>{hero.nome}</strong>
                                             <span style={{ fontSize: 11, opacity: 0.8 }}>
-                                                Nv {hero.nivel} · <span style={{ fontWeight: 700, color: 'var(--color-tertiary-dark)' }}>💰 {hero.fc_balance} FC</span>
+                                                Nv {hero.nivel} · <span style={{ fontWeight: 700, color: 'var(--color-primary-light)' }}>🪙 {hero.fc_balance} FC</span>
                                             </span>
                                         </div>
                                     </div>
@@ -625,16 +637,17 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         <button
                                             onClick={() => setIsMasterCreateOpen(true)}
                                             style={{
-                                                border: '3px dashed var(--color-primary)',
+                                                border: '3px dashed var(--color-border)',
                                                 borderRadius: 12, background: 'transparent',
                                                 cursor: 'pointer', padding: 'var(--space-3)',
                                                 display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
-                                                gap: 6, transition: 'all 0.2s',
-                                                minHeight: 120
+                                                gap: 8, transition: 'border-color 0.15s, background 0.15s',
+                                                minHeight: 120,
+                                                color: 'var(--color-text-muted)',
                                             }}
-                                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.borderColor = 'var(--color-border)'; }}
-                                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+                                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.background = 'var(--color-surface)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-border)'; }}
                                         >
                                             <span style={{ fontSize: 24, display: 'block' }}>🤝</span>
                                             <span style={{ fontSize: 13, fontWeight: 800 }}>Adicionar Mestre</span>
@@ -643,18 +656,17 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         <button
                                             onClick={handleStripeUpgrade}
                                             style={{
-                                                border: '3px dashed var(--color-border)',
-                                                borderRadius: 12, background: 'var(--color-surface-alt)',
+                                                border: '3px dashed var(--color-danger)',
+                                                borderRadius: 12, background: 'rgba(239, 68, 68, 0.05)',
                                                 cursor: 'pointer', padding: 'var(--space-3)',
                                                 display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
-                                                gap: 6, minHeight: 120,
-                                                color: 'var(--color-text-muted)',
-                                                opacity: 0.8
+                                                gap: 8, minHeight: 120,
+                                                color: 'var(--color-danger)',
                                             }}
                                         >
-                                            <span style={{ fontSize: 20, display: 'block' }}>🚫</span>
-                                            <span style={{ fontSize: 11, fontWeight: 800, textAlign: 'center' }}>LIMITE ATINGIDO</span>
+                                            <span style={{ fontSize: 24, display: 'block' }}>💎</span>
+                                            <span style={{ fontSize: 11, fontWeight: 800, textAlign: 'center' }}>LIMITE ATINGIDO<br /><span style={{ fontSize: 10, opacity: 0.7 }}>Clique p/ Upgrade</span></span>
                                         </button>
                                     )
                                 )}

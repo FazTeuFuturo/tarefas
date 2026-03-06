@@ -40,6 +40,15 @@ export const RewardCard: React.FC<RewardCardProps> = ({
     const iconKey = (reward.icon_type || '').toLowerCase();
     const icon = celebrating ? '✨' : (ICON_MAP[iconKey] ?? reward.icon_type ?? '🎁');
 
+    // Posições e rotações aleatórias das moedas (fixas para não mudar no re-render)
+    const coinParticles = [
+        { left: '15%', rot: '-25deg', delay: '0s' },
+        { left: '30%', rot: '10deg',  delay: '0.08s' },
+        { left: '50%', rot: '-8deg',  delay: '0.05s' },
+        { left: '65%', rot: '20deg',  delay: '0.12s' },
+        { left: '80%', rot: '-15deg', delay: '0.03s' },
+    ];
+
     return (
         <>
             <div
@@ -49,16 +58,36 @@ export const RewardCard: React.FC<RewardCardProps> = ({
                     textAlign: 'center',
                     position: 'relative',
                     opacity: disabled ? 0.55 : 1,
-                    borderColor: celebrating ? 'var(--color-success)' : undefined,
-                    transform: celebrating ? 'scale(1.05)' : 'none',
-                    transition: 'transform 0.2s, border-color 0.2s',
+                    borderColor: celebrating ? 'var(--color-primary)' : undefined,
+                    boxShadow: celebrating ? 'var(--neo-shadow), var(--glow-gold)' : undefined,
+                    animation: celebrating ? 'celebrateBounce 0.5s ease-out forwards' : undefined,
+                    transition: 'border-color 0.2s, box-shadow 0.2s',
                     display: 'flex',
                     flexDirection: 'column',
                     height: '100%',
                     justifyContent: 'space-between',
-                    minHeight: '150px'
+                    minHeight: '150px',
+                    overflow: 'visible',
                 }}
             >
+                {/* Partículas de moeda ao comprar */}
+                {celebrating && (
+                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 20 }}>
+                        {coinParticles.map((p, i) => (
+                            <span
+                                key={i}
+                                style={{
+                                    position: 'absolute',
+                                    bottom: '40%',
+                                    left: p.left,
+                                    fontSize: 22,
+                                    animation: `coinFloat 0.85s ease-out ${p.delay} forwards`,
+                                    '--rot': p.rot,
+                                } as React.CSSProperties}
+                            >🪙</span>
+                        ))}
+                    </div>
+                )}
                 {showDelete && onDelete && (
                     <button
                         type="button"
@@ -94,7 +123,12 @@ export const RewardCard: React.FC<RewardCardProps> = ({
 
 
                 <div>
-                    <div style={{ fontSize: 40, marginBottom: 'var(--space-1)', filter: celebrating ? 'drop-shadow(0 0 10px gold)' : 'none' }}>
+                    <div style={{
+                        fontSize: 40,
+                        marginBottom: 'var(--space-1)',
+                        animation: celebrating ? 'iconSpin 0.6s ease-out forwards' : undefined,
+                        display: 'inline-block',
+                    }}>
                         {icon}
                     </div>
                     <h4 style={{ margin: '0 0 4px', fontSize: 'var(--font-size-sm)', lineHeight: 1.2 }}>

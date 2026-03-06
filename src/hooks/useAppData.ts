@@ -262,22 +262,23 @@ export function useAppData() {
     }, [profile, fetchAll]);
 
     const buyReward = useCallback(async (reward: Reward) => {
-        if (!profile || profile.fc_balance < reward.cost_fc) return false;
+        // Usa activeProfile para suportar troca same-device (herói ativo ≠ mestre logado)
+        if (!activeProfile || activeProfile.fc_balance < reward.cost_fc) return false;
 
         try {
-            const newBalance = profile.fc_balance - reward.cost_fc;
+            const newBalance = activeProfile.fc_balance - reward.cost_fc;
 
             // 1. Gravar Redenção (Log)
             // 2. Atualizar perfil
             const { error: redemptionError } = await supabase.from('redemptions').insert([{
-                profile_id: profile.id,
+                profile_id: activeProfile.id,
                 reward_id: reward.id,
                 cost_fc: reward.cost_fc,
-                clan_id: profile.clan_id
+                clan_id: activeProfile.clan_id
             }]);
 
             if (redemptionError) {
-                // Se a tabela redemptions não existir, ainda assim subtraímos os pontos 
+                // Se a tabela redemptions não existir, ainda assim subtraímos os pontos
                 // mas avisamos no console. Isso evita travar o jogo se o usuário não rodou o SQL ainda.
                 console.warn("Tabela 'redemptions' não encontrada. Rodar SQL de migração.");
             }
@@ -285,7 +286,7 @@ export function useAppData() {
             const { error: profileError } = await supabase
                 .from('profiles')
                 .update({ fc_balance: newBalance })
-                .eq('id', profile.id);
+                .eq('id', activeProfile.id);
 
             if (profileError) throw profileError;
 
@@ -296,7 +297,7 @@ export function useAppData() {
             console.error('Error buying reward:', err);
             return false;
         }
-    }, [profile, refreshProfile, fetchAll]);
+    }, [activeProfile, refreshProfile, fetchAll]);
 
     const useReward = useCallback(async (redemptionId: string) => {
         if (!profile) return;

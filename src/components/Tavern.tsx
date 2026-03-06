@@ -14,18 +14,29 @@ const playCoinsSound = () => {
     try {
         const AudioCtx = window.AudioContext || (window as Window & typeof globalThis & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         const ctx = new AudioCtx();
-        const notes = [523, 659, 784, 1047];
-        notes.forEach((freq, i) => {
+        // Fanfarra ascendente: C5 E5 G5 C6 E6 + eco de moedas
+        const melody = [
+            { freq: 523,  t: 0,    dur: 0.18 },
+            { freq: 659,  t: 0.10, dur: 0.18 },
+            { freq: 784,  t: 0.20, dur: 0.18 },
+            { freq: 1047, t: 0.30, dur: 0.28 },
+            { freq: 1319, t: 0.38, dur: 0.40 },
+            // eco de moedas
+            { freq: 1047, t: 0.55, dur: 0.12 },
+            { freq: 1047, t: 0.65, dur: 0.10 },
+            { freq: 1047, t: 0.72, dur: 0.08 },
+        ];
+        melody.forEach(({ freq, t, dur }) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain);
             gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
-            gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.08);
-            gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.12);
-            osc.start(ctx.currentTime + i * 0.08);
-            osc.stop(ctx.currentTime + i * 0.08 + 0.12);
+            osc.type = t < 0.5 ? 'square' : 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + t);
+            gain.gain.setValueAtTime(t < 0.5 ? 0.12 : 0.07, ctx.currentTime + t);
+            gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + t + dur);
+            osc.start(ctx.currentTime + t);
+            osc.stop(ctx.currentTime + t + dur);
         });
     } catch (err) { console.warn('Audio not supported', err); }
 };
@@ -87,10 +98,14 @@ export const Tavern: React.FC<TavernProps> = ({ fcBalance, onPurchase }) => {
                             key={reward.id}
                             reward={reward}
                             onAction={handleBuy}
-                            disabled={purchasing === reward.id}
+                            disabled={purchasing === reward.id || celebration === reward.id}
                             celebrating={celebration === reward.id}
                             insufficient={insufficientId === reward.id}
-                            actionLabel={purchasing === reward.id ? '⏳' : celebration === reward.id ? '🎉 COMPRADO!' : undefined}
+                            actionLabel={
+                                purchasing === reward.id ? '⏳ Comprando...' :
+                                celebration === reward.id ? '🎉 COMPRADO!' :
+                                undefined
+                            }
                             actionColor={celebration === reward.id ? 'var(--color-success)' : undefined}
                         />
                     ))}
