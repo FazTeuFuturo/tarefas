@@ -282,6 +282,21 @@ export function useAppData() {
         }
     }, [profile, fetchAll]);
 
+    const updateReward = useCallback(async (rewardId: string, updates: Partial<Reward>) => {
+        if (!profile || (profile.role !== 'parent' && (profile.role as any) !== 'mestre')) return;
+        setLoading(true);
+        try {
+            const { error } = await supabase.from('rewards').update(updates).eq('id', rewardId);
+            if (error) throw error;
+            await fetchAll();
+        } catch (err: any) {
+            console.error('Error updating reward:', err);
+            alert('Erro ao atualizar prêmio: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [profile, fetchAll]);
+
     const buyReward = useCallback(async (reward: Reward) => {
         // Usa activeProfile para suportar troca same-device (herói ativo ≠ mestre logado)
         if (!activeProfile || activeProfile.fc_balance < reward.cost_fc) return false;
@@ -427,5 +442,5 @@ export function useAppData() {
         }
     }, [profile, fetchAll]);
 
-    return { myQuests, managedQuests, rewards, redemptions, leaderboard, loading, completeQuest, approveQuest, rejectQuest, updateFCBalance, createTask, deleteTask, updateTask, createTavernItem, deleteReward, buyReward, useReward, startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile, giveBonus, refetch: fetchAll };
+    return { myQuests, managedQuests, rewards, redemptions, leaderboard, loading, completeQuest, approveQuest, rejectQuest, updateFCBalance, createTask, deleteTask, updateTask, createTavernItem, deleteReward, updateReward, buyReward, useReward, startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile, giveBonus, refetch: fetchAll };
 }

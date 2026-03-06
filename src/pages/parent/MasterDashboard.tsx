@@ -1,7 +1,8 @@
+import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData, Reward } from '../../hooks/useAppData';
 import { QuestList } from '../../components/QuestList';
 import { RewardCard } from '../../components/RewardCard';
 import { MissionEditModal } from '../../components/MissionEditModal';
@@ -24,12 +25,14 @@ interface MasterDashboardProps {
     onSwitchToHero?: (hero: Profile) => void;
 }
 
+const QUICK_EMOJIS = ['🎮', '🍕', '🌙', '⭐', '🏆', '🎁', '⚔️', '🛡️', '🧪', '📜', '💎', '🍎', '🏰', '🧹', '🧺', '👟'];
+
 export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps) {
     const { activeProfile: profile, clearActiveProfile } = useAuth();
     const {
         managedQuests, myQuests, rewards, redemptions, leaderboard,
         completeQuest, createTask, deleteTask, updateTask,
-        approveQuest, rejectQuest, createTavernItem, deleteReward,
+        approveQuest, rejectQuest, createTavernItem, deleteReward, updateReward,
         startQuestTimer, pauseQuestTimer, resetQuestTimer, updateProfile, deleteProfile, giveBonus
     } = useAppData();
 
@@ -82,6 +85,8 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [rewardDesc, setRewardDesc] = useState('');
     const [rewardCost, setRewardCost] = useState(100);
     const [rewardIcon, setRewardIcon] = useState('🎁');
+    const [rewardEditingId, setRewardEditingId] = useState<string | null>(null);
+    const [tavernTab, setTavernTab] = useState<'rewards' | 'history'>('rewards');
 
     // Bonus
     const [isBonusOpen, setIsBonusOpen] = useState(false);
@@ -122,9 +127,33 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
 
     const handleCreateReward = async (e: React.FormEvent) => {
         e.preventDefault();
-        await createTavernItem(rewardTitle, rewardDesc, Number(rewardCost), rewardIcon);
+        if (rewardEditingId) {
+            await updateReward(rewardEditingId, {
+                titulo: rewardTitle,
+                descricao: rewardDesc,
+                cost_fc: rewardCost,
+                icon_type: rewardIcon
+            });
+            setRewardEditingId(null);
+        } else {
+            await createTavernItem(rewardTitle, rewardDesc, rewardCost, rewardIcon);
+        }
+        setRewardTitle('');
+        setRewardDesc('');
+        setRewardCost(10);
+        setRewardIcon('🎁');
         setIsCreatingReward(false);
-        setRewardTitle(''); setRewardDesc(''); setRewardIcon('🎁');
+    };
+
+    const handleEditReward = (reward: Reward) => {
+        setRewardTitle(reward.titulo);
+        setRewardDesc(reward.descricao);
+        setRewardCost(reward.cost_fc);
+        setRewardIcon(reward.icon_type || '🎁');
+        setRewardEditingId(reward.id);
+        setIsCreatingReward(true);
+        // Scroll to top of tavern view to see the form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const pendingQuests = managedQuests.filter(q => q.status === 'pending');
@@ -340,126 +369,185 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                 {view === 'tavern' && (
                     <div className="flex-col gap-3" style={{ paddingTop: 'var(--space-3)', animation: 'slideIn 0.2s ease' }}>
 
-                        {/* Header */}
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 style={{ margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', textShadow: '0 0 10px rgba(245,166,35,0.4)' }}>🍺 Taverna</h2>
-                                <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>
-                                    {rewards.length} prêmio{rewards.length !== 1 ? 's' : ''} · {redemptions.length} resgate{redemptions.length !== 1 ? 's' : ''}
-                                </p>
-                            </div>
-                            {!isCreatingReward && (
-                                <button className="neo-button" style={{ fontSize: 'var(--font-size-sm)', padding: '8px 14px' }} onClick={() => setIsCreatingReward(true)}>
-                                    ＋ Novo Prêmio
-                                </button>
-                            )}
+                        {/* ─── Tabs ─── */}
+                        <div className="flex gap-2" style={{ marginBottom: 'var(--space-2)' }}>
+                            <button
+                                className={`flex-1 neo-button ${tavernTab === 'rewards' ? '' : 'neo-button--ghost'}`}
+                                style={{ fontSize: 'var(--font-size-xs)', padding: '8px' }}
+                                onClick={() => setTavernTab('rewards')}
+                            >
+                                🏺 Prêmios
+                            </button>
+                            <button
+                                className={`flex-1 neo-button ${tavernTab === 'history' ? '' : 'neo-button--ghost'}`}
+                                style={{ fontSize: 'var(--font-size-xs)', padding: '8px' }}
+                                onClick={() => setTavernTab('history')}
+                            >
+                                🛒 Resgatados {redemptions.length > 0 && `(${redemptions.length})`}
+                            </button>
                         </div>
 
-                        {/* Formulário de criação */}
-                        {isCreatingReward && (
-                            <div className="neo-box" style={{ padding: 'var(--space-3)', borderColor: 'var(--color-border-gold)', boxShadow: 'var(--neo-shadow), var(--glow-gold)' }}>
-                                <h3 style={{ margin: '0 0 var(--space-2)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', fontSize: 'var(--font-size-base)' }}>🎁 Novo Prêmio</h3>
-                                <form onSubmit={handleCreateReward} className="flex-col gap-2">
-                                    <input type="text" className="neo-input" placeholder="Nome do prêmio" value={rewardTitle} onChange={e => setRewardTitle(e.target.value)} required />
-                                    <textarea className="neo-input" rows={2} placeholder="Descrição (opcional)..." value={rewardDesc} onChange={e => setRewardDesc(e.target.value)} />
-                                    <div className="flex gap-2">
-                                        <div style={{ flex: 1 }}>
-                                            <label className="neo-label">Custo (FC)</label>
-                                            <input type="number" className="neo-input" min={1} value={rewardCost} onChange={e => setRewardCost(Number(e.target.value))} required />
+                        {tavernTab === 'rewards' ? (
+                            <div className="flex-col gap-3">
+                                {/* Dar Bônus Avulso (Now at the top of rewards) */}
+                                <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-surface-alt)', border: '2px solid var(--color-border)' }}>
+                                    <div className="flex items-center justify-between" style={{ marginBottom: isBonusOpen ? 'var(--space-2)' : 0 }}>
+                                        <div>
+                                            <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>💰 Dar Bônus</h3>
+                                            {!isBonusOpen && <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Credite FC ou XP diretamente a um herói</p>}
                                         </div>
-                                        <div style={{ width: 70 }}>
-                                            <label className="neo-label">Emoji</label>
-                                            <input type="text" className="neo-input" style={{ textAlign: 'center' }} placeholder="🎁" value={rewardIcon} onChange={e => setRewardIcon(e.target.value)} maxLength={2} />
-                                        </div>
+                                        <button
+                                            className={`neo-button${isBonusOpen ? ' neo-button--ghost' : ''} flex items-center gap-1`}
+                                            style={{ fontSize: 12, padding: '6px 12px' }}
+                                            onClick={() => setIsBonusOpen(v => !v)}
+                                        >
+                                            {isBonusOpen ? <><X size={14} strokeWidth={3} /> Cancelar</> : <><Plus size={14} strokeWidth={3} /> Dar Bônus</>}
+                                        </button>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button type="submit" className="neo-button" style={{ flex: 2 }}>✦ SALVAR PRÊMIO</button>
-                                        <button type="button" className="neo-button neo-button--ghost" style={{ flex: 1 }} onClick={() => setIsCreatingReward(false)}>Cancelar</button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
 
-                        {/* Grid de prêmios */}
-                        {rewards.length === 0 ? (
-                            <div className="neo-box" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
-                                <span style={{ fontSize: 40, display: 'block', marginBottom: 'var(--space-2)' }}>🏺</span>
-                                <p style={{ margin: 0, color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>Nenhum prêmio cadastrado ainda.</p>
-                                <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Clique em "＋ Novo Prêmio" para começar.</p>
+                                    {isBonusOpen && (
+                                        <form onSubmit={handleGiveBonus} className="flex-col gap-2" style={{ paddingTop: 'var(--space-2)', borderTop: '1px dashed var(--color-border)' }}>
+                                            <div>
+                                                <label className="neo-label">Herói</label>
+                                                <select className="neo-input" value={bonusHeroId} onChange={e => setBonusHeroId(e.target.value)} required>
+                                                    <option value="">Selecione um herói...</option>
+                                                    {leaderboard.filter(p => p.role === 'child').map(h => (
+                                                        <option key={h.id} value={h.id}>{h.nome}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <div style={{ flex: 1 }}>
+                                                    <label className="neo-label">🪙 FC</label>
+                                                    <input type="number" min={0} max={9999} className="neo-input" value={bonusFC} onChange={e => setBonusFC(Number(e.target.value))} />
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                    <label className="neo-label">⭐ XP</label>
+                                                    <input type="number" min={0} max={9999} className="neo-input" value={bonusXP} onChange={e => setBonusXP(Number(e.target.value))} />
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="neo-button"
+                                                disabled={bonusSending || !bonusHeroId || (bonusFC === 0 && bonusXP === 0)}
+                                            >
+                                                {bonusSending ? '⏳ Enviando...' : '🎉 Confirmar Bônus'}
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+
+                                {/* Formulário de criação/edição */}
+                                {isCreatingReward && (
+                                    <div className="neo-box" style={{ padding: 'var(--space-3)', borderColor: 'var(--color-border-gold)', boxShadow: 'var(--neo-shadow), var(--glow-gold)' }}>
+                                        <h3 style={{ margin: '0 0 var(--space-2)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)', fontSize: 'var(--font-size-base)' }}>
+                                            {rewardEditingId ? '📝 Editar Prêmio' : '🎁 Novo Prêmio'}
+                                        </h3>
+                                        <form onSubmit={handleCreateReward} className="flex-col gap-2">
+                                            <input type="text" className="neo-input" placeholder="Nome do prêmio" value={rewardTitle} onChange={e => setRewardTitle(e.target.value)} required />
+                                            <textarea className="neo-input" rows={2} placeholder="Descrição (opcional)..." value={rewardDesc} onChange={e => setRewardDesc(e.target.value)} />
+                                            <div className="flex gap-2">
+                                                <div style={{ flex: 1 }}>
+                                                    <label className="neo-label">Custo (FC)</label>
+                                                    <input type="number" className="neo-input" min={1} value={rewardCost} onChange={e => setRewardCost(Number(e.target.value))} required />
+                                                </div>
+                                                <div style={{ width: 70 }}>
+                                                    <label className="neo-label">Emoji</label>
+                                                    <input type="text" className="neo-input" style={{ textAlign: 'center' }} placeholder="🎁" value={rewardIcon} onChange={e => setRewardIcon(e.target.value)} maxLength={2} />
+                                                </div>
+                                            </div>
+
+                                            {/* Quick Emoji Picker */}
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', background: 'var(--color-surface)', padding: '6px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--color-border)' }}>
+                                                {QUICK_EMOJIS.map(emoji => (
+                                                    <button
+                                                        key={emoji}
+                                                        type="button"
+                                                        onClick={() => setRewardIcon(emoji)}
+                                                        style={{
+                                                            fontSize: '20px',
+                                                            background: rewardIcon === emoji ? 'var(--color-primary-light)' : 'transparent',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            padding: '4px',
+                                                            borderRadius: '4px',
+                                                            transition: 'transform 0.1s',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                                                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                                    >
+                                                        {emoji}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button type="submit" className="neo-button" style={{ flex: 2 }}>✦ {rewardEditingId ? 'ATUALIZAR' : 'SALVAR'} PRÊMIO</button>
+                                                <button type="button" className="neo-button neo-button--ghost" style={{ flex: 1 }} onClick={() => { setIsCreatingReward(false); setRewardEditingId(null); }}>Cancelar</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                )}
+
+                                {/* Grid de prêmios */}
+                                {rewards.length === 0 ? (
+                                    <div className="neo-box" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
+                                        <span style={{ fontSize: 40, display: 'block', marginBottom: 'var(--space-2)' }}>🏺</span>
+                                        <p style={{ margin: 0, color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>Nenhum prêmio cadastrado ainda.</p>
+                                        <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Clique no botão "Novo Prêmio" para começar.</p>
+                                    </div>
+                                ) : (
+                                    <div style={{ paddingBottom: 'var(--space-4)' }}>
+                                        <p style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                            🏺 {rewards.length} Prêmio{rewards.length !== 1 ? 's' : ''} disponíveis
+                                        </p>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-3)', paddingTop: 8 }}>
+                                            {rewards.map(r => (
+                                                <RewardCard
+                                                    key={r.id}
+                                                    reward={r}
+                                                    showDelete
+                                                    onDelete={deleteReward}
+                                                    onEdit={handleEditReward}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
-                            <div>
+                            <div className="flex-col gap-3">
                                 <p style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                    🏺 {rewards.length} Prêmio{rewards.length !== 1 ? 's' : ''} disponíveis
+                                    🛒 Histórico de Resgates
                                 </p>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-3)', paddingTop: 14 }}>
-                                    {rewards.map(r => <RewardCard key={r.id} reward={r} showDelete onDelete={deleteReward} />)}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Dar Bônus Avulso */}
-                        <div className="neo-box" style={{ padding: 'var(--space-3)', background: 'var(--color-surface-alt)' }}>
-                            <div className="flex items-center justify-between" style={{ marginBottom: isBonusOpen ? 'var(--space-2)' : 0 }}>
-                                <div>
-                                    <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>💰 Dar Bônus</h3>
-                                    {!isBonusOpen && <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Credite FC ou XP diretamente a um herói</p>}
-                                </div>
-                                <button
-                                    className={`neo-button${isBonusOpen ? ' neo-button--ghost' : ''}`}
-                                    style={{ fontSize: 12, padding: '6px 12px' }}
-                                    onClick={() => setIsBonusOpen(v => !v)}
-                                >{isBonusOpen ? '✕ Cancelar' : '＋ Dar Bônus'}</button>
-                            </div>
-
-                            {isBonusOpen && (
-                                <form onSubmit={handleGiveBonus} className="flex-col gap-2">
-                                    <div>
-                                        <label className="neo-label">Herói</label>
-                                        <select className="neo-input" value={bonusHeroId} onChange={e => setBonusHeroId(e.target.value)} required>
-                                            <option value="">Selecione um herói...</option>
-                                            {leaderboard.filter(p => p.role === 'child').map(h => (
-                                                <option key={h.id} value={h.id}>{h.nome}</option>
-                                            ))}
-                                        </select>
+                                {redemptions.length === 0 ? (
+                                    <div className="neo-box" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
+                                        <span style={{ fontSize: 40, display: 'block', marginBottom: 'var(--space-2)' }}>🏜️</span>
+                                        <p style={{ margin: 0, color: 'var(--color-text-muted)', fontWeight: 'var(--font-weight-semibold)' }}>Nenhum resgate realizado ainda.</p>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <div style={{ flex: 1 }}>
-                                            <label className="neo-label">🪙 FC</label>
-                                            <input type="number" min={0} max={9999} className="neo-input" value={bonusFC} onChange={e => setBonusFC(Number(e.target.value))} />
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <label className="neo-label">⭐ XP</label>
-                                            <input type="number" min={0} max={9999} className="neo-input" value={bonusXP} onChange={e => setBonusXP(Number(e.target.value))} />
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        className="neo-button"
-                                        disabled={bonusSending || !bonusHeroId || (bonusFC === 0 && bonusXP === 0)}
-                                    >
-                                        {bonusSending ? '⏳ Enviando...' : '🎉 Confirmar Bônus'}
-                                    </button>
-                                </form>
-                            )}
-                        </div>
-
-                        {/* Últimos resgates */}
-                        {redemptions.length > 0 && (
-                            <div className="neo-box" style={{ padding: 'var(--space-3)', borderColor: 'var(--color-border-gold)' }}>
-                                <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--font-size-base)', fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>🛒 Últimos Resgates</h3>
-                                {redemptions.slice(0, 8).map(r => (
-                                    <div key={r.id} className="flex justify-between items-center" style={{ padding: '8px 0', borderBottom: '1px solid var(--color-border-subtle)' }}>
-                                        <div className="flex items-center gap-2">
-                                            <span style={{ fontSize: 18 }}>{r.rewards?.icon_type ?? '🎁'}</span>
-                                            <div>
-                                                <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', fontWeight: 800 }}>{r.rewards?.titulo}</p>
-                                                <p style={{ margin: 0, fontSize: 10, color: 'var(--color-text-muted)' }}>{r.profiles?.nome}</p>
+                                ) : (
+                                    <div className="neo-box" style={{ padding: 'var(--space-3)', borderColor: 'var(--color-border)' }}>
+                                        {redemptions.map(r => (
+                                            <div key={r.id} className="flex justify-between items-center" style={{ padding: '12px 0', borderBottom: '1px solid var(--color-border-subtle)' }}>
+                                                <div className="flex items-center gap-3">
+                                                    <span style={{ fontSize: 24, background: 'var(--color-surface)', border: '2px solid var(--color-border)', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--border-radius-sm)', boxShadow: '4px 4px 0 var(--color-border)' }}>{r.rewards?.icon_type ?? '🎁'}</span>
+                                                    <div>
+                                                        <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', fontWeight: 900 }}>{r.rewards?.titulo}</p>
+                                                        <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+                                                            Resgatado por <span style={{ color: 'var(--color-primary-light)' }}>{r.profiles?.nome}</span>
+                                                        </p>
+                                                        <p style={{ margin: 0, fontSize: 10, color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                                                            {new Date(r.created_at).toLocaleDateString('pt-BR')} às {new Date(r.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <span style={{ fontWeight: 800, color: 'var(--color-primary-light)', fontSize: 'var(--font-size-sm)', background: 'var(--color-overlay-gold)', padding: '4px 10px', borderRadius: 'var(--border-radius-sm)', border: '2px solid var(--color-border-gold)', boxShadow: 'var(--neo-shadow-sm)' }}>-{r.cost_fc} FC</span>
                                             </div>
-                                        </div>
-                                        <span style={{ fontWeight: 800, color: 'var(--color-primary-light)', fontSize: 'var(--font-size-xs)', background: 'var(--color-overlay-gold)', padding: '2px 8px', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--color-border-gold)' }}>-{r.cost_fc} FC</span>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
                         )}
                     </div>
@@ -597,7 +685,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.background = 'var(--color-surface)'; }}
                                             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.background = 'transparent'; }}
                                         >
-                                            <span style={{ fontSize: 32, display: 'block' }}>＋</span>
+                                            <Plus size={32} strokeWidth={3} style={{ opacity: 0.5 }} />
                                             <span style={{ fontSize: 13, fontWeight: 800 }}>Novo Herói</span>
                                         </button>
                                     ) : (
@@ -642,7 +730,9 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                                     fontSize: '14px', zIndex: 10, padding: 0, cursor: 'pointer'
                                                 }}
                                                 title="Remover Mestre"
-                                            >✕</button>
+                                            >
+                                                <X size={16} strokeWidth={3} />
+                                            </button>
                                         )}
                                         {master.id === profile.id && (
                                             <button
@@ -771,7 +861,9 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         color: 'var(--night-300)',
                     }}
                     title="Nova Missão"
-                >＋</button>
+                >
+                    <Plus size={32} strokeWidth={3} />
+                </button>
             )}
 
             {/* Modals */}

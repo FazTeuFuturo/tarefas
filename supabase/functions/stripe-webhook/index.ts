@@ -53,66 +53,108 @@ serve(async (req) => {
         const event = JSON.parse(bodyText);
         const { type, data } = event;
 
-        await supabase.from('stripe_webhook_logs').insert({
-            event_type: type,
-            payload: event,
-            status: 'received'
-        });
+        // Insere o log inicial e captura o ID para atualizar depois
+        const { data: logRow } = await supabase
+            .from('stripe_webhook_logs')
+            .insert({ event_type: type, payload: event, status: 'received' })
+            .select('id')
+            .single();
 
-        // Upgrade para premium
-        if (type === 'checkout.session.completed') {
-            const session = data.object;
-            const userId = session.metadata?.user_id;
+        const logId: string | null = logRow?.id ?? null;
 
-            if (userId) {
-                // Descobre o clan_id do pagador
-                const { data: profile, error: profileErr } = await supabase
-                    .from('profiles')
-                    .select('clan_id')
-                    .eq('id', userId)
+        let clanId: string | null = null;
+        let processingError: string | null = null;
+
+        try {
+            // Upgrade para premium
+            if (type === 'checkout.session.completed') {
+                const session = data.object;
+                const userId = session.metadata?.user_id;
+
+                if (userId) {
+                    const { data: profile, error: profileErr } = await supabase
+                        .from('profiles')
+                        .select('clan_id')
+                        .eq('id', userId)
+                        .single();
+
+                    if (profileErr || !profile?.clan_id) throw profileErr ?? new Error('clan_id não encontrado');
+                    clanId = profile.clan_id;
+
+                    const { error } = await supabase
+                        .from('clans')
+                        .update({
+                            stripe_customer_id: session.customer,
+                            stripe_subscription_id: session.subscription,
+                            subscription_status: 'active',
+                            plan: 'premium'
+                        })
+                        .eq('id', clanId);
+
+                    if (error) throw error;
+                    console.log(`[STRIPE-WEBHOOK] Clã ${clanId} atualizado para PREMIUM.`);
+                }
+            }
+
+            // Cancelamento
+            if (type === 'customer.subscription.deleted') {
+                const subscriptionId = data.object.id;
+
+                const { data: clan, error: clanErr } = await supabase
+                    .from('clans')
+                    .select('id')
+                    .eq('stripe_subscription_id', subscriptionId)
                     .single();
 
-                if (profileErr || !profile?.clan_id) throw profileErr ?? new Error('clan_id não encontrado');
+                if (clanErr || !clan) throw clanErr ?? new Error('Clã não encontrado para subscription');
+                clanId = clan.id;
 
-                // Atualiza o clã — trigger propaga plan para todos os membros automaticamente
                 const { error } = await supabase
                     .from('clans')
-                    .update({
-                        stripe_customer_id: session.customer,
-                        stripe_subscription_id: session.subscription,
-                        subscription_status: 'active',
-                        plan: 'premium'
-                    })
-                    .eq('id', profile.clan_id);
+                    .update({ subscription_status: 'canceled', plan: 'free' })
+                    .eq('id', clanId);
 
                 if (error) throw error;
-                console.log(`[STRIPE-WEBHOOK] Clã ${profile.clan_id} atualizado para PREMIUM.`);
+                console.log(`[STRIPE-WEBHOOK] Clã ${clanId} cancelado → FREE.`);
             }
-        }
 
-        // Cancelamento ou falha de pagamento
-        if (type === 'customer.subscription.deleted' || type === 'invoice.payment_failed') {
-            const subscriptionId = data.object.id;
+            // Falha de pagamento (mantém premium por enquanto, muda status para past_due)
+            if (type === 'invoice.payment_failed') {
+                const subscriptionId = data.object.subscription;
 
-            // Encontra o clã pela subscription — trigger propaga downgrade para todos
-            const { data: clan, error: clanErr } = await supabase
-                .from('clans')
-                .select('id')
-                .eq('stripe_subscription_id', subscriptionId)
-                .single();
+                const { data: clan, error: clanErr } = await supabase
+                    .from('clans')
+                    .select('id')
+                    .eq('stripe_subscription_id', subscriptionId)
+                    .single();
 
-            if (clanErr || !clan) throw clanErr ?? new Error('Clã não encontrado para subscription');
+                if (clanErr || !clan) throw clanErr ?? new Error('Clã não encontrado para subscription');
+                clanId = clan.id;
 
-            const { error } = await supabase
-                .from('clans')
-                .update({
-                    subscription_status: type === 'customer.subscription.deleted' ? 'canceled' : 'past_due',
-                    plan: 'free'
-                })
-                .eq('id', clan.id);
+                const { error } = await supabase
+                    .from('clans')
+                    .update({ subscription_status: 'past_due' })
+                    .eq('id', clanId);
 
-            if (error) throw error;
-            console.log(`[STRIPE-WEBHOOK] Clã ${clan.id} revertido para FREE (${type}).`);
+                if (error) throw error;
+                console.log(`[STRIPE-WEBHOOK] Clã ${clanId} com pagamento falho → past_due.`);
+            }
+
+        } catch (innerErr: unknown) {
+            processingError = innerErr instanceof Error ? innerErr.message : 'Unknown processing error';
+            throw innerErr; // re-lança para o catch externo retornar 400
+        } finally {
+            // Sempre atualiza o log com o resultado final
+            if (logId) {
+                await supabase
+                    .from('stripe_webhook_logs')
+                    .update({
+                        status: processingError ? 'error' : 'processed',
+                        error_message: processingError,
+                        clan_id: clanId,
+                    })
+                    .eq('id', logId);
+            }
         }
 
         return new Response(JSON.stringify({ received: true }), {

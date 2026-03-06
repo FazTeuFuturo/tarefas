@@ -1,6 +1,7 @@
 import React from 'react';
 import { Reward } from '../hooks/useAppData';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
+import { Edit2, X } from 'lucide-react';
 
 export const ICON_MAP: Record<string, string> = {
     gamepad: '🎮',
@@ -17,6 +18,7 @@ interface RewardCardProps {
     actionLabel?: string;
     actionColor?: string;
     onDelete?: (id: string) => void;
+    onEdit?: (reward: Reward) => void;
     showDelete?: boolean;
     disabled?: boolean;
     celebrating?: boolean;
@@ -29,6 +31,7 @@ export const RewardCard: React.FC<RewardCardProps> = ({
     actionLabel,
     actionColor,
     onDelete,
+    onEdit,
     showDelete = false,
     disabled = false,
     celebrating = false,
@@ -43,9 +46,9 @@ export const RewardCard: React.FC<RewardCardProps> = ({
     // Posições e rotações aleatórias das moedas (fixas para não mudar no re-render)
     const coinParticles = [
         { left: '15%', rot: '-25deg', delay: '0s' },
-        { left: '30%', rot: '10deg',  delay: '0.08s' },
-        { left: '50%', rot: '-8deg',  delay: '0.05s' },
-        { left: '65%', rot: '20deg',  delay: '0.12s' },
+        { left: '30%', rot: '10deg', delay: '0.08s' },
+        { left: '50%', rot: '-8deg', delay: '0.05s' },
+        { left: '65%', rot: '20deg', delay: '0.12s' },
         { left: '80%', rot: '-15deg', delay: '0.03s' },
     ];
 
@@ -88,37 +91,61 @@ export const RewardCard: React.FC<RewardCardProps> = ({
                         ))}
                     </div>
                 )}
-                {showDelete && onDelete && (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setIsModalOpen(true);
-                        }}
-                        style={{
-                            position: 'absolute',
-                            top: '-10px',
-                            right: '-10px',
-                            background: 'var(--color-danger)',
-                            border: '3px solid var(--color-border)',
-                            color: 'white',
-                            borderRadius: '50%',
-                            width: '32px',
-                            height: '32px',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            fontWeight: '900',
-                            zIndex: 9999,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '2px 2px 0 var(--color-border)',
-                            pointerEvents: 'auto'
-                        }}
-                    >
-                        ×
-                    </button>
+                {showDelete && (
+                    <div style={{ position: 'absolute', top: '-10px', right: '-10px', display: 'flex', gap: '4px', zIndex: 10 }}>
+                        {onEdit && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onEdit(reward);
+                                }}
+                                style={{
+                                    background: 'var(--color-primary)',
+                                    border: '3px solid var(--color-border)',
+                                    color: 'white',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '2px 2px 0 var(--color-border)',
+                                }}
+                                title="Editar Prêmio"
+                            >
+                                <Edit2 size={14} strokeWidth={3} />
+                            </button>
+                        )}
+                        {onDelete && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsModalOpen(true);
+                                }}
+                                style={{
+                                    background: 'var(--color-danger)',
+                                    border: '3px solid var(--color-border)',
+                                    color: 'white',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '2px 2px 0 var(--color-border)',
+                                }}
+                                title="Excluir Prêmio"
+                            >
+                                <X size={16} strokeWidth={3} />
+                            </button>
+                        )}
+                    </div>
                 )}
 
 

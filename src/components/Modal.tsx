@@ -25,8 +25,16 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, 
                 setIsClosing(false);
                 document.body.style.overflow = 'auto';
             }, 300); // Sincronizado com a animação de saída no CSS
-            return () => clearTimeout(timer);
+            return () => {
+                clearTimeout(timer);
+                document.body.style.overflow = 'auto';
+            };
         }
+
+        // Cleanup para quando o componente for desmontado inesperadamente
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
     }, [isOpen, shouldRender]);
 
     if (!shouldRender) return null;
