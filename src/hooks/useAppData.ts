@@ -170,6 +170,27 @@ export function useAppData() {
         if (!activeProfile || activeProfile.role !== 'parent') return;
         setLoading(true);
         try {
+            // Server-side quota enforcement — evita bypass via DevTools ou API direta
+            const currentPlan = activeProfile.plan ?? 'free';
+            const limits = currentPlan === 'premium'
+                ? { normalQuests: 100, recurringQuests: 100 }
+                : { normalQuests: 2, recurringQuests: 1 };
+
+            const { count, error: countError } = await supabase
+                .from('tasks')
+                .select('*', { count: 'exact', head: true })
+                .eq('clan_id', activeProfile.clan_id)
+                .in('status', ['active', 'pending'])
+                .eq('is_recurring', isRecurring);
+
+            if (countError) throw countError;
+
+            const limit = isRecurring ? limits.recurringQuests : limits.normalQuests;
+            if ((count ?? 0) >= limit) {
+                alert('Limite de missões do plano gratuito atingido! Faça upgrade para criar mais.');
+                return;
+            }
+
             const newTask = {
                 titulo: title,
                 descricao: description,

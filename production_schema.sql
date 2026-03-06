@@ -1,5 +1,5 @@
 -- ==========================================================
--- FAMILY QUEST - CONSOLIDATED PRODUCTION SCHEMA
+-- FAMILY QUEST - CONSOLIDATED PRODUCTION SCHEMA (CURRENT)
 -- Use este script no Editor SQL do seu projeto Supabase
 -- [Projeto: cgmpjzwtolnrwsctrerr]
 -- ==========================================================
@@ -17,83 +17,135 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- 2. TABELA DE PERFIS (PROFILES)
+-- 2. TABELA DE CLÃS (CLANS) — source of truth para plano e stripe
+CREATE TABLE IF NOT EXISTS public.clans (
+  id                     uuid        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  nome                   text        NOT NULL DEFAULT 'Família',
+  plan                   text        NOT NULL DEFAULT 'free',
+  stripe_customer_id     text,
+  stripe_subscription_id text,
+  subscription_status    text        NOT NULL DEFAULT 'inactive',
+  created_by             uuid,       -- informacional, sem FK
+  created_at             timestamptz NOT NULL DEFAULT now()
+);
+
+-- 3. TABELA DE PERFIS (PROFILES)
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
-  email TEXT NOT NULL,
-  nome TEXT NOT NULL,
-  avatar TEXT,
-  role user_role DEFAULT 'child' NOT NULL,
-  xp INTEGER DEFAULT 0 NOT NULL,
-  nivel INTEGER DEFAULT 1 NOT NULL,
-  fc_balance INTEGER DEFAULT 0 NOT NULL,
-  tempo_economizado_total INTEGER DEFAULT 0 NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+  id                       uuid        NOT NULL,
+  email                    text        NOT NULL,
+  nome                     text        NOT NULL,
+  avatar                   text,
+  role                     user_role   NOT NULL DEFAULT 'child'::user_role,
+  xp                       integer     NOT NULL DEFAULT 0,
+  nivel                    integer     NOT NULL DEFAULT 1,
+  fc_balance               integer     NOT NULL DEFAULT 0,
+  created_at               timestamptz NOT NULL DEFAULT timezone('utc'::text, now()),
+  pin_hash                 text,
+  invite_token             text        DEFAULT (gen_random_uuid())::text UNIQUE,
+  created_by               uuid,
+  data_nascimento          date,
+  foto_url                 text,
+  clan_id                  uuid,
+  tempo_economizado_total  integer     DEFAULT 0,
+  plan                     text        NOT NULL DEFAULT 'free', -- cache sincronizado via trigger de clans
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT profiles_clan_id_fkey    FOREIGN KEY (clan_id)    REFERENCES public.clans(id)
 );
 
 -- 3. TABELA DE MISSÕES (TASKS)
 CREATE TABLE IF NOT EXISTS public.tasks (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  titulo TEXT NOT NULL,
-  descricao TEXT,
-  xp_reward INTEGER DEFAULT 0 NOT NULL,
-  fc_reward INTEGER DEFAULT 0 NOT NULL,
-  status task_status DEFAULT 'active' NOT NULL,
-  duracao_minutos INTEGER DEFAULT 10,
-  is_recurring BOOLEAN DEFAULT false,
-  assignee_id UUID REFERENCES public.profiles(id),
-  created_by UUID REFERENCES public.profiles(id) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  time_saved_seconds INTEGER DEFAULT 0,
-  -- Campos de Timer
-  timer_status TEXT DEFAULT 'idle', -- idle, running, paused
-  timer_remaining_seconds INTEGER,
-  timer_updated_at TIMESTAMP WITH TIME ZONE
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  titulo text NOT NULL,
+  descricao text,
+  xp_reward integer NOT NULL DEFAULT 0,
+  fc_reward integer NOT NULL DEFAULT 0,
+  status task_status NOT NULL DEFAULT 'active'::task_status,
+  duracao_minutos integer DEFAULT 10,
+  is_recurring boolean DEFAULT false,
+  assignee_id uuid,
+  created_by uuid NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  timer_status text DEFAULT 'idle'::text,
+  timer_remaining_seconds integer,
+  timer_updated_at timestamp with time zone,
+  clan_id uuid,
+  time_saved_seconds integer DEFAULT 0,
+  CONSTRAINT tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT tasks_assignee_id_fkey FOREIGN KEY (assignee_id) REFERENCES public.profiles(id),
+  CONSTRAINT tasks_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
 );
 
 -- 4. TABELA DE RECOMPENSAS (REWARDS)
 CREATE TABLE IF NOT EXISTS public.rewards (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  titulo TEXT NOT NULL,
-  descricao TEXT,
-  cost_fc INTEGER DEFAULT 0 NOT NULL,
-  icon_type TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  titulo text NOT NULL,
+  descricao text,
+  cost_fc integer NOT NULL DEFAULT 0,
+  icon_type text,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  clan_id uuid,
+  CONSTRAINT rewards_pkey PRIMARY KEY (id)
 );
 
 -- 5. TABELA DE RESGATES E INVENTÁRIO (REDEMPTIONS)
 CREATE TABLE IF NOT EXISTS public.redemptions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  profile_id UUID REFERENCES public.profiles(id) NOT NULL,
-  reward_id UUID REFERENCES public.rewards(id) NOT NULL,
-  status TEXT DEFAULT 'unused' NOT NULL, -- unused, used
-  cost_fc INTEGER NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  profile_id uuid NOT NULL,
+  reward_id uuid NOT NULL,
+  status text NOT NULL DEFAULT 'unused'::text,
+  cost_fc integer NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  clan_id uuid,
+  CONSTRAINT redemptions_pkey PRIMARY KEY (id),
+  CONSTRAINT redemptions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
+  CONSTRAINT redemptions_reward_id_fkey FOREIGN KEY (reward_id) REFERENCES public.rewards(id)
 );
 
--- 6. CONFIGURAÇÃO DE REALTIME
+-- 6. TABELA DE LOGS DE WEBHOOKS STRIPE
+CREATE TABLE IF NOT EXISTS public.stripe_webhook_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  event_type text NOT NULL,
+  payload jsonb NOT NULL,
+  status text,
+  error_message text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT stripe_webhook_logs_pkey PRIMARY KEY (id)
+);
+
+-- 7. CONFIGURAÇÃO DE REALTIME
 BEGIN;
   DROP PUBLICATION IF EXISTS supabase_realtime;
   CREATE PUBLICATION supabase_realtime;
 COMMIT;
 ALTER PUBLICATION supabase_realtime ADD TABLE profiles, tasks, rewards, redemptions;
 
--- 7. SEGURANÇA (RLS) - Simples para Desenvolvimento/Produção Inicial
+-- 8. SEGURANÇA (RLS)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rewards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE redemptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stripe_webhook_logs ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  CREATE POLICY "Allow all operations" ON profiles FOR ALL USING (true) WITH CHECK (true);
-  CREATE POLICY "Allow all operations" ON tasks FOR ALL USING (true) WITH CHECK (true);
-  CREATE POLICY "Allow all operations" ON rewards FOR ALL USING (true) WITH CHECK (true);
-  CREATE POLICY "Allow all operations" ON redemptions FOR ALL USING (true) WITH CHECK (true);
-EXCEPTION
-  WHEN duplicate_object THEN null;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all operations' AND tablename = 'profiles') THEN
+    CREATE POLICY "Allow all operations" ON profiles FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all operations' AND tablename = 'tasks') THEN
+    CREATE POLICY "Allow all operations" ON tasks FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all operations' AND tablename = 'rewards') THEN
+    CREATE POLICY "Allow all operations" ON rewards FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all operations' AND tablename = 'redemptions') THEN
+    CREATE POLICY "Allow all operations" ON redemptions FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all operations' AND tablename = 'stripe_webhook_logs') THEN
+    CREATE POLICY "Allow all operations" ON stripe_webhook_logs FOR ALL USING (true) WITH CHECK (true);
+  END IF;
 END $$;
 
--- 8. TRIGGER DE CRIAÇÃO AUTOMÁTICA DE PERFIL (AUTH -> PUBLIC)
+-- 9. TRIGGER DE CRIAÇÃO AUTOMÁTICA DE PERFIL (AUTH -> PUBLIC)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN

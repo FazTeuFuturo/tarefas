@@ -47,20 +47,19 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     // Identifica se o Mestre atual é o dono do Clã (Primary Parent)
     const isPrimaryParent = profile?.role === 'parent' && (!profile?.created_by || profile?.id === profile?.clan_id);
 
-    // Lógica de Planos e Limites (MVP)
-    const currentPlan = (profile as any)?.plan || 'free'; // 'free' ou 'premium'
-    const limits = {
-        free: { heroes: 1, masters: 1, normalQuests: 2, recurringQuests: 1 },
-        premium: { heroes: 3, masters: 2, normalQuests: 100, recurringQuests: 100 }
-    }[currentPlan as 'free' | 'premium'] || { heroes: 1, masters: 1, normalQuests: 2, recurringQuests: 1 };
+    // Lógica de Planos e Limites
+    const currentPlan = profile?.plan ?? 'free';
+    const limits = currentPlan === 'premium'
+        ? { heroes: 3, masters: 2, normalQuests: 100, recurringQuests: 100 }
+        : { heroes: 1, masters: 1, normalQuests: 2, recurringQuests: 1 };
 
     const numHeroes = leaderboard.filter(m => m.role === 'child').length;
     const numMasters = leaderboard.filter(m => m.role === 'parent').length;
 
-    // Contagem de Missões para Limites (inclui Ativas, Completas e Pendentes - TUDO que não foi aprovado ainda)
-    const activeQuestsList = managedQuests.filter(q => q.status !== 'approved');
-    const normalCount = activeQuestsList.filter(q => !q.is_recurring).length;
-    const recurringCount = activeQuestsList.filter(q => q.is_recurring).length;
+    // Contagem de missões para UI (active + pending — estados buscados pelo useAppData)
+    // A verificação real de cota ocorre server-side em useAppData.createTask
+    const normalCount = managedQuests.filter(q => !q.is_recurring).length;
+    const recurringCount = managedQuests.filter(q => q.is_recurring).length;
 
     const canAddHero = numHeroes < limits.heroes;
     const canAddMaster = numMasters < limits.masters;
@@ -139,6 +138,10 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
         : filterMember === 'unassigned'
             ? allRelevantQuests.filter(q => !q.assignee_id)
             : allRelevantQuests.filter(q => q.assignee_id === filterMember);
+
+    const dailyTasks = filteredQuests.filter(q => q.is_recurring);
+    const adventureQuests = filteredQuests.filter(q => !q.is_recurring);
+    const completedDaily = dailyTasks.filter(q => q.status === 'pending' || q.status === 'completed').length;
 
     if (!profile) return null;
 
@@ -285,19 +288,50 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                 </p>
                             </div>
                         ) : (
-                            <QuestList
-                                quests={filteredQuests}
-                                onCompleteQuest={completeQuest}
-                                onDeleteQuest={deleteTask}
-                                onEditQuest={(q) => { setEditingQuest(q); setIsEditingModalOpen(true); }}
-                                isParent={true}
-                                profiles={leaderboard}
-                                onStartTimer={startQuestTimer}
-                                onPauseTimer={pauseQuestTimer}
-                                onResetTimer={resetQuestTimer}
-                                onApproveQuest={approveQuest}
-                                onRejectQuest={rejectQuest}
-                            />
+                            <div className="flex-col gap-4">
+                                {dailyTasks.length > 0 && (
+                                    <div className="flex-col gap-2">
+                                        <div className="flex justify-between items-center">
+                                            <h3 style={{ fontSize: 'var(--font-size-base)', margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>☀️ Deveres Diários</h3>
+                                            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 800, color: 'var(--color-tertiary)' }}>
+                                                {completedDaily}/{dailyTasks.length} {statusFilter === 'active' ? 'em andamento' : 'pendentes'}
+                                            </span>
+                                        </div>
+                                        <QuestList
+                                            quests={dailyTasks}
+                                            onCompleteQuest={completeQuest}
+                                            onDeleteQuest={deleteTask}
+                                            onEditQuest={(q) => { setEditingQuest(q); setIsEditingModalOpen(true); }}
+                                            isParent={true}
+                                            profiles={leaderboard}
+                                            onStartTimer={startQuestTimer}
+                                            onPauseTimer={pauseQuestTimer}
+                                            onResetTimer={resetQuestTimer}
+                                            onApproveQuest={approveQuest}
+                                            onRejectQuest={rejectQuest}
+                                        />
+                                    </div>
+                                )}
+
+                                {adventureQuests.length > 0 && (
+                                    <div className="flex-col gap-2">
+                                        <h3 style={{ fontSize: 'var(--font-size-base)', margin: 0, fontFamily: 'var(--font-family-heading)', color: 'var(--color-primary-light)' }}>⚔️ Missões de Aventura</h3>
+                                        <QuestList
+                                            quests={adventureQuests}
+                                            onCompleteQuest={completeQuest}
+                                            onDeleteQuest={deleteTask}
+                                            onEditQuest={(q) => { setEditingQuest(q); setIsEditingModalOpen(true); }}
+                                            isParent={true}
+                                            profiles={leaderboard}
+                                            onStartTimer={startQuestTimer}
+                                            onPauseTimer={pauseQuestTimer}
+                                            onResetTimer={resetQuestTimer}
+                                            onApproveQuest={approveQuest}
+                                            onRejectQuest={rejectQuest}
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
                 )}

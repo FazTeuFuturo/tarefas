@@ -102,11 +102,13 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
                     className="flex items-center gap-2"
                     style={{
                         padding: 'var(--space-2)',
-                        background: isRecurring ? 'var(--color-primary)' : '#f5f5f5',
-                        borderRadius: 8,
-                        border: '2px solid #000',
+                        background: 'var(--color-surface)',
+                        borderRadius: 'var(--border-radius-sm)',
+                        border: 'var(--border-width) solid var(--color-border)',
                         cursor: canAddRecurring || !isRecurring ? 'pointer' : 'not-allowed',
-                        opacity: !isRecurring && !canAddRecurring ? 0.6 : 1
+                        opacity: !isRecurring && !canAddRecurring ? 0.6 : 1,
+                        boxShadow: isRecurring ? 'var(--glow-gold)' : 'none',
+                        borderColor: isRecurring ? 'var(--color-border-gold)' : 'var(--color-border)'
                     }}
                     onClick={() => {
                         if (!isRecurring && !canAddRecurring) {
@@ -117,15 +119,17 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
                     }}
                 >
                     <div style={{
-                        width: 22, height: 22, border: '2px solid #000', borderRadius: 4,
-                        background: isRecurring ? '#000' : '#fff',
+                        width: 22, height: 22,
+                        border: '2px solid var(--color-border-gold)',
+                        borderRadius: 4,
+                        background: isRecurring ? 'var(--color-primary)' : 'var(--color-background)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                     }}>
-                        {isRecurring && <span style={{ color: 'white', fontSize: 14, lineHeight: 1 }}>✓</span>}
+                        {isRecurring && <span style={{ color: 'black', fontSize: 14, fontWeight: '900' }}>✓</span>}
                     </div>
                     <div>
-                        <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)' }}>🔁 Missão Recorrente (Diária)</p>
-                        <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>Volta automaticamente após aprovada</p>
+                        <p style={{ margin: 0, fontWeight: 800, fontSize: 'var(--font-size-sm)', color: 'var(--color-text)' }}>🔁 Missão Recorrente (Diária)</p>
+                        <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>Volta automaticamente após aprovada</p>
                     </div>
                 </div>
 
@@ -137,13 +141,11 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
 
                 <button
                     type="submit"
-                    className="neo-button w-full"
+                    className={`neo-button w-full ${isBlocked ? 'disabled' : ''}`}
                     style={{
-                        background: isBlocked ? '#ccc' : 'var(--color-secondary)',
                         padding: 'var(--space-3)',
                         fontSize: 'var(--font-size-lg)',
                         marginTop: 'var(--space-1)',
-                        cursor: isBlocked ? 'not-allowed' : 'pointer'
                     }}
                     disabled={isSaving || isBlocked}
                 >

@@ -12,6 +12,7 @@ export interface Profile {
     nivel: number;
     fc_balance: number;
     clan_id: string;
+    plan: 'free' | 'premium';
     pin_hash?: string;
     invite_token?: string;
     created_by?: string;

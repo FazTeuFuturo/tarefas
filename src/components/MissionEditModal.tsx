@@ -143,7 +143,7 @@ export const MissionEditModal: React.FC<MissionEditModalProps> = ({
                     <button
                         type="submit"
                         className="neo-button"
-                        style={{ flex: 1, background: 'var(--color-success)', color: 'white' }}
+                        style={{ flex: 1 }}
                     >
                         Salvar Alterações
                     </button>
