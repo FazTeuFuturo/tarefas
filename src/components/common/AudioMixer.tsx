@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useAudio } from '../../contexts/AudioContext';
 
