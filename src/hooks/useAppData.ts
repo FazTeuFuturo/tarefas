@@ -173,7 +173,7 @@ export function useAppData() {
             // Server-side quota enforcement — evita bypass via DevTools ou API direta
             const currentPlan = activeProfile.plan ?? 'free';
             const limits = currentPlan === 'premium'
-                ? { normalQuests: 100, recurringQuests: 100 }
+                ? { normalQuests: 200, recurringQuests: 200 }
                 : { normalQuests: 2, recurringQuests: 1 };
 
             const { count, error: countError } = await supabase

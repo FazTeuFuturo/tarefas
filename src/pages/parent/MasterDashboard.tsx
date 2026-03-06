@@ -53,7 +53,7 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     // Lógica de Planos e Limites
     const currentPlan = profile?.plan ?? 'free';
     const limits = currentPlan === 'premium'
-        ? { heroes: 3, masters: 2, normalQuests: 100, recurringQuests: 100 }
+        ? { heroes: 3, masters: 2, normalQuests: 200, recurringQuests: 200 }
         : { heroes: 1, masters: 1, normalQuests: 2, recurringQuests: 1 };
 
     const numHeroes = leaderboard.filter(m => m.role === 'child').length;
@@ -96,6 +96,10 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
     const [bonusSending, setBonusSending] = useState(false);
 
     const handleStripeUpgrade = async () => {
+        if (currentPlan === 'premium') {
+            window.open('https://wa.me/5511999999999?text=Olá!%20Atingi%20o%20limite%20de%20membros%20no%20meu%20plano%20Premium%20do%20Family%20Quest%20e%20gostaria%20de%20expandir.', '_blank');
+            return;
+        }
         setIsRedirectingStripe(true);
         try {
             const { data, error } = await supabase.functions.invoke('create-stripe-checkout');
@@ -692,17 +696,17 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         <button
                                             onClick={handleStripeUpgrade}
                                             style={{
-                                                border: '3px dashed var(--color-danger)',
-                                                borderRadius: 12, background: 'rgba(239, 68, 68, 0.05)',
+                                                border: `3px dashed ${currentPlan === 'premium' ? 'var(--color-primary-light)' : 'var(--color-danger)'}`,
+                                                borderRadius: 12, background: currentPlan === 'premium' ? 'rgba(245, 166, 35, 0.05)' : 'rgba(239, 68, 68, 0.05)',
                                                 cursor: 'pointer', padding: 'var(--space-3)',
                                                 display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
                                                 gap: 8, minHeight: 160,
-                                                color: 'var(--color-danger)',
+                                                color: currentPlan === 'premium' ? 'var(--color-primary-light)' : 'var(--color-danger)',
                                             }}
                                         >
-                                            <span style={{ fontSize: 24, display: 'block' }}>💎</span>
-                                            <span style={{ fontSize: 11, fontWeight: 800, textAlign: 'center' }}>LIMITE ATINGIDO<br /><span style={{ fontSize: 10, opacity: 0.7 }}>Clique p/ Upgrade</span></span>
+                                            <span style={{ fontSize: 24, display: 'block' }}>{currentPlan === 'premium' ? '🤝' : '💎'}</span>
+                                            <span style={{ fontSize: 11, fontWeight: 800, textAlign: 'center' }}>LIMITE ATINGIDO<br /><span style={{ fontSize: 10, opacity: 0.7 }}>{currentPlan === 'premium' ? 'Contate Suporte' : 'Clique p/ Upgrade'}</span></span>
                                         </button>
                                     )
                                 )}
@@ -787,17 +791,17 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                                         <button
                                             onClick={handleStripeUpgrade}
                                             style={{
-                                                border: '3px dashed var(--color-danger)',
-                                                borderRadius: 12, background: 'rgba(239, 68, 68, 0.05)',
+                                                border: `3px dashed ${currentPlan === 'premium' ? 'var(--color-primary-light)' : 'var(--color-danger)'}`,
+                                                borderRadius: 12, background: currentPlan === 'premium' ? 'rgba(245, 166, 35, 0.05)' : 'rgba(239, 68, 68, 0.05)',
                                                 cursor: 'pointer', padding: 'var(--space-3)',
                                                 display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
                                                 gap: 8, minHeight: 120,
-                                                color: 'var(--color-danger)',
+                                                color: currentPlan === 'premium' ? 'var(--color-primary-light)' : 'var(--color-danger)',
                                             }}
                                         >
-                                            <span style={{ fontSize: 24, display: 'block' }}>💎</span>
-                                            <span style={{ fontSize: 11, fontWeight: 800, textAlign: 'center' }}>LIMITE ATINGIDO<br /><span style={{ fontSize: 10, opacity: 0.7 }}>Clique p/ Upgrade</span></span>
+                                            <span style={{ fontSize: 24, display: 'block' }}>{currentPlan === 'premium' ? '🧙‍♂️' : '💎'}</span>
+                                            <span style={{ fontSize: 11, fontWeight: 800, textAlign: 'center' }}>LIMITE ATINGIDO<br /><span style={{ fontSize: 10, opacity: 0.7 }}>{currentPlan === 'premium' ? 'Contate Suporte' : 'Clique p/ Upgrade'}</span></span>
                                         </button>
                                     )
                                 )}

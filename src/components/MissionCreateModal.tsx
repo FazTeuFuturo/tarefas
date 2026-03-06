@@ -135,7 +135,7 @@ export const MissionCreateModal: React.FC<MissionCreateModalProps> = ({
 
                 {isBlocked && (
                     <p style={{ margin: 0, color: 'var(--color-danger)', fontSize: 11, fontWeight: 800, textAlign: 'center' }}>
-                        ⚠️ Limite do plano gratuito atingido para este tipo de missão!
+                        ⚠️ Limite de missões atingido para este plano!
                     </p>
                 )}
 
