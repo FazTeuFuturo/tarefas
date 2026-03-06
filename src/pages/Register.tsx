@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAudio } from '../contexts/AudioContext';
 
 interface RegisterProps {
     onRegisterSuccess: (email: string) => void;
@@ -7,6 +8,12 @@ interface RegisterProps {
 }
 
 export const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigateLogin }) => {
+    const { stopAudio } = useAudio();
+
+    useEffect(() => {
+        stopAudio();
+    }, [stopAudio]);
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');

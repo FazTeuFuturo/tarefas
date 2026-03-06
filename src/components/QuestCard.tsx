@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Edit2, X } from 'lucide-react';
 
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
@@ -173,7 +174,8 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                             <button
                                 onClick={() => onEdit(quest)}
                                 style={{
-                                    background: 'var(--color-secondary)',
+                                    background: 'var(--color-surface-alt)',
+                                    color: 'var(--gold-200)',
                                     border: '2px solid var(--color-border)',
                                     borderRadius: '50%',
                                     width: '28px',
@@ -183,11 +185,14 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     padding: 0,
-                                    boxShadow: '2px 2px 0 var(--color-border)'
+                                    boxShadow: '2px 2px 0 var(--color-border)',
+                                    transition: 'all 0.2s',
                                 }}
                                 title="Editar Missão"
+                                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-2px, -2px)'; e.currentTarget.style.boxShadow = '4px 4px 0 var(--color-border)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '2px 2px 0 var(--color-border)'; }}
                             >
-                                ✏️
+                                <Edit2 size={14} strokeWidth={2.5} />
                             </button>
                         )}
                         {onDelete && (
@@ -196,7 +201,6 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                 style={{
                                     background: 'var(--color-danger)',
                                     color: 'white',
-                                    fontWeight: 800,
                                     border: '2px solid var(--color-border)',
                                     borderRadius: '50%',
                                     width: '28px',
@@ -206,11 +210,14 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     padding: 0,
-                                    boxShadow: '2px 2px 0 var(--color-border)'
+                                    boxShadow: '2px 2px 0 var(--color-border)',
+                                    transition: 'all 0.2s',
                                 }}
                                 title="Excluir Missão"
+                                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-2px, -2px)'; e.currentTarget.style.boxShadow = '4px 4px 0 var(--color-border)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '2px 2px 0 var(--color-border)'; }}
                             >
-                                ✕
+                                <X size={16} strokeWidth={3} />
                             </button>
                         )}
                     </div>
@@ -242,7 +249,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                             }}
                             title="Desistir da Missão"
                         >
-                            ✕
+                            <X size={16} strokeWidth={3} />
                         </button>
                     </div>
                 )}
@@ -263,9 +270,9 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                             </p>
                         )}
                         <div className="flex gap-2 items-center" style={{ marginTop: 'var(--space-1)' }}>
-                            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-tertiary)' }}>★ {quest.xp_reward} XP</span>
-                            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary-dark)' }}>🪙 {quest.fc_reward} FC</span>
-                            <span style={{ fontSize: 'var(--font-size-xs)', background: 'var(--color-overlay-light)', border: '1px solid var(--color-border-subtle)', padding: '2px 6px', borderRadius: 'var(--border-radius-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-parchment-text)' }}>👤 {assigneeName || 'Todos'}</span>
+                            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-tertiary-light)' }}>★ {quest.xp_reward} XP</span>
+                            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>🪙 {quest.fc_reward} FC</span>
+                            <span style={{ fontSize: 'var(--font-size-xs)', background: 'var(--color-overlay-white)', border: '1px solid var(--color-border-subtle)', padding: '2px 6px', borderRadius: 'var(--border-radius-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-muted)' }}>👤 {assigneeName || 'Todos'}</span>
                         </div>
                     </div>
 
@@ -273,16 +280,16 @@ export const QuestCard: React.FC<QuestCardProps> = ({
                         {quest.status === 'pending' ? (
                             <div className="flex-col gap-2 w-full">
                                 <div style={{
-                                    background: 'linear-gradient(135deg, var(--amber-300), var(--amber-500))',
-                                    border: 'var(--border-width) solid var(--amber-700)',
+                                    background: 'var(--color-overlay-gold)',
+                                    border: 'var(--border-width) solid var(--color-warning)',
                                     borderRadius: 'var(--border-radius-sm)',
                                     padding: 'var(--space-2)',
                                     fontSize: 'var(--font-size-sm)',
                                     fontWeight: 'var(--font-weight-bold)',
                                     textAlign: 'center',
                                     minWidth: 120,
-                                    color: 'var(--night-300)',
-                                    boxShadow: '0 0 10px rgba(245, 158, 11, 0.3)',
+                                    color: 'var(--color-warning)',
+                                    boxShadow: 'var(--glow-gold)',
                                 }}>
                                     ⏳ EM VALIDAÇÃO
                                 </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mascot } from '../components/Mascot';
+import { useAudio } from '../contexts/AudioContext';
 export type MascotState = 'idle' | 'happy' | 'focused_password' | 'error';
 
 interface LoginProps {
@@ -9,10 +10,14 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateRegister }) => {
+    const { stopAudio } = useAudio();
+
     useEffect(() => {
         // Limpa qual perfil está jogando para sempre mostrar a Tela Netflix no próximo login
         localStorage.removeItem('fq_active_profile_id');
-    }, []);
+        // Para qualquer música que estivesse tocando da sessão anterior
+        stopAudio();
+    }, [stopAudio]);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

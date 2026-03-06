@@ -6,6 +6,7 @@ import { Inventory } from '../../components/Inventory';
 import { HeroSettingsModal } from '../../components/HeroSettingsModal';
 import { QuestList } from '../../components/QuestList';
 import { useAppData } from '../../hooks/useAppData';
+import { AudioMixer } from '../../components/common/AudioMixer';
 
 interface HeroDashboardProps {
     heroExitButton?: React.ReactNode;
@@ -34,6 +35,9 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
     return (
         <div className="mobile-app-container">
             <header style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 50,
                 padding: 'var(--space-3) var(--space-2)',
                 background: 'linear-gradient(135deg, var(--night-200), var(--night-100))',
                 borderBottom: 'var(--border-width) solid var(--color-border-gold)',
@@ -45,6 +49,7 @@ export default function HeroDashboard({ heroExitButton }: HeroDashboardProps = {
                     <p style={{ margin: 0, fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>O que vamos conquistar hoje?</p>
                 </div>
                 <div className="flex gap-2 items-center">
+                    <AudioMixer />
                     {heroExitButton}
                 </div>
             </header>

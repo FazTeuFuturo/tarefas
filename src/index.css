@@ -235,26 +235,24 @@ p {
   border-radius: var(--border-radius);
 }
 
-/* Variante Pergaminho: para cards de missao */
+/* Variante: para cards de missao */
 .quest-card {
-  background: linear-gradient(145deg, var(--color-parchment), var(--color-parchment-dark));
-  border: var(--border-width-thick) solid var(--parchment-400);
+  background-color: var(--color-surface);
+  border: var(--border-width-thick) solid var(--color-border);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  color: var(--color-parchment-text);
+  box-shadow: var(--neo-shadow);
+  color: var(--color-text);
   position: relative;
+  transition: all var(--transition-fast);
+}
+
+.quest-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--neo-shadow-hover);
 }
 
 .quest-card::before {
-  content: '';
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  bottom: 6px;
-  border: 1px solid rgba(201, 169, 110, 0.3);
-  border-radius: calc(var(--border-radius) - 4px);
-  pointer-events: none;
+  display: none;
 }
 
 /* ============================================================

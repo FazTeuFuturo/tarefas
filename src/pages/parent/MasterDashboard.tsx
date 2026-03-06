@@ -16,6 +16,7 @@ import { Modal } from '../../components/Modal';
 import { uploadAvatar } from '../../lib/storageUtils';
 import { ImageCropperModal } from '../../components/ImageCropperModal';
 import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
+import { AudioMixer } from '../../components/common/AudioMixer';
 
 type MasterView = 'home' | 'missions' | 'tavern' | 'clan';
 
@@ -145,6 +146,9 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
         <div className="mobile-app-container">
             {/* HEADER */}
             <header style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 50,
                 padding: 'var(--space-3) var(--space-2)',
                 background: 'linear-gradient(135deg, var(--night-200), var(--night-100))',
                 borderBottom: 'var(--border-width) solid var(--color-border-gold)',
@@ -157,14 +161,17 @@ export default function MasterDashboard({ onSwitchToHero }: MasterDashboardProps
                         Mestre {profile.nome}
                     </p>
                 </div>
-                <button
-                    onClick={clearActiveProfile}
-                    className="neo-button neo-button--danger"
-                    style={{ padding: '8px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    title="Sair"
-                >
-                    <span style={{ fontSize: 18, fontWeight: 'var(--font-weight-black)' }}>✕</span>
-                </button>
+                <div className="flex gap-2 items-center">
+                    <AudioMixer />
+                    <button
+                        onClick={clearActiveProfile}
+                        className="neo-button neo-button--danger"
+                        style={{ padding: '8px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Sair"
+                    >
+                        <span style={{ fontSize: 18, fontWeight: 'var(--font-weight-black)' }}>✕</span>
+                    </button>
+                </div>
             </header>
 
             <div style={{ padding: '0 var(--space-2)', paddingBottom: 90 }}>

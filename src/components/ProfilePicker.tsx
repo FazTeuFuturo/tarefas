@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, Profile } from '../contexts/AuthContext';
+import { useAudio } from '../contexts/AudioContext';
 import { supabase } from '../lib/supabase';
 import { PinEntry } from './PinEntry';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
 
 export const ProfilePicker: React.FC = () => {
     const { profile: masterProfile, switchToProfile } = useAuth();
+    const { startAudio, stopAudio } = useAudio();
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedHero, setSelectedHero] = useState<Profile | null>(null);
+
+    // Ensure audio is stopped when entering the picker
+    useEffect(() => {
+        stopAudio();
+    }, [stopAudio]);
 
     useEffect(() => {
         if (!masterProfile) return;
@@ -36,8 +43,11 @@ export const ProfilePicker: React.FC = () => {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--color-background)' }}>
-                <div style={{ fontSize: 48 }}>⚔️</div>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background)', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>⚔️</div>
+                    <p style={{ fontWeight: 800, color: 'var(--color-primary-light)', fontSize: '1.2rem', fontFamily: 'var(--font-family-heading)', textShadow: '0 0 10px rgba(245,166,35,0.3)' }}>Carregando aventura...</p>
+                </div>
             </div>
         );
     }
@@ -48,6 +58,7 @@ export const ProfilePicker: React.FC = () => {
             <PinEntry
                 hero={selectedHero}
                 onSuccess={() => {
+                    startAudio();
                     switchToProfile(selectedHero);
                 }}
                 onCancel={() => setSelectedHero(null)}

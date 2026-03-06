@@ -18,10 +18,10 @@ function AppRouter() {
     // ─── Loading ─────────────────────────────────────────────────────────────
     if (isLoading) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background)', flexDirection: 'column', gap: 'var(--space-2)' }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 48, marginBottom: 16 }}>⚔️</div>
-                    <p style={{ fontWeight: 800, color: '#fff' }}>Carregando aventura...</p>
+                    <p style={{ fontWeight: 800, color: 'var(--color-primary-light)', fontSize: '1.2rem', fontFamily: 'var(--font-family-heading)', textShadow: '0 0 10px rgba(245,166,35,0.3)' }}>Carregando aventura...</p>
                 </div>
             </div>
         );
@@ -60,10 +60,14 @@ function AppRouter() {
 
 }
 
+import { AudioProvider } from './contexts/AudioContext';
+
 export default function App() {
     return (
         <AuthProvider>
-            <AppRouter />
+            <AudioProvider>
+                <AppRouter />
+            </AudioProvider>
         </AuthProvider>
     );
 }
